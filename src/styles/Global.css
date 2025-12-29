@@ -1,0 +1,436 @@
+/* ============================================
+   GLAUCOMA MONITORING SYSTEM - GLOBAL STYLES
+   ============================================ */
+
+:root {
+  --primary-color: #2563eb;
+  --secondary-color: #1e40af;
+  --success-color: #10b981;
+  --warning-color: #f59e0b;
+  --danger-color: #ef4444;
+  --light-bg: #f9fafb;
+  --border-color: #e5e7eb;
+  --text-dark: #111827;
+  --text-light: #6b7280;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  user-select: text;
+}
+
+::selection {
+  background-color: rgba(59, 130, 246, 0.3);
+  color: inherit;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background-color: var(--light-bg);
+  color: var(--text-dark);
+}
+
+code {
+  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New', monospace;
+}
+
+/* ============================================
+   BUTTONS
+   ============================================ */
+
+button {
+  cursor: pointer;
+  border: none;
+  border-radius: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  font-size: 1rem;
+  font-weight: 500;
+  transition: all 0.3s ease;
+}
+
+.btn, .action-button {
+  background-color: var(--primary-color);
+  color: white;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  font-weight: 500;
+  transition: background-color 0.3s;
+}
+
+.btn:hover,
+.action-button:hover {
+  background-color: var(--secondary-color);
+}
+
+.btn-primary, .action-button.primary {
+  background-color: var(--primary-color);
+  color: white;
+}
+
+.btn-primary:hover,
+.action-button.primary:hover {
+  background-color: var(--secondary-color);
+}
+
+.btn-secondary, .action-button.secondary {
+  background-color: #6b7280;
+  color: white;
+}
+
+.btn-secondary:hover,
+.action-button.secondary:hover {
+  background-color: #4b5563;
+}
+
+.back-button {
+  background: none;
+  color: var(--primary-color);
+  padding: 0.5rem 1rem;
+  border: 2px solid var(--primary-color);
+  margin-bottom: 1rem;
+}
+
+.back-button:hover {
+  background-color: var(--primary-color);
+  color: white;
+}
+
+/* ============================================
+   CARDS & CONTAINERS
+   ============================================ */
+
+.info-card {
+  background: white;
+  border: 2px solid #d1d5db;
+  border-radius: 0.75rem;
+  padding: 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+  color: #111827;
+}
+
+.card-icon {
+  font-size: 2rem;
+  flex-shrink: 0;
+}
+
+.card-content {
+  flex: 1;
+  color: #111827;
+}
+
+.card-title {
+  font-size: 0.875rem;
+  color: #4b5563;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 0.5rem;
+}
+
+.card-value {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #111827;
+  margin-top: 0.25rem;
+}
+
+.card-unit {
+  font-size: 0.875rem;
+  color: #4b5563;
+  margin-left: 0.5rem;
+  font-weight: 600;
+}
+
+/* ============================================
+   ALERTS & MESSAGES
+   ============================================ */
+
+.alert {
+  padding: 1rem 1.5rem;
+  border-radius: 0.5rem;
+  margin-bottom: 1rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.alert-success {
+  background-color: #d1fae5;
+  color: #065f46;
+  border-left: 4px solid var(--success-color);
+}
+
+.alert-warning {
+  background-color: #fef3c7;
+  color: #92400e;
+  border-left: 4px solid var(--warning-color);
+}
+
+.alert-error {
+  background-color: #fee2e2;
+  color: #7f1d1d;
+  border-left: 4px solid var(--danger-color);
+}
+
+.alert-close {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 1.25rem;
+  color: inherit;
+  padding: 0;
+}
+
+.error-message {
+  background-color: #fee2e2;
+  color: #7f1d1d;
+  padding: 1rem;
+  border-radius: 0.5rem;
+  border-left: 4px solid var(--danger-color);
+  margin: 1rem 0;
+}
+
+/* ============================================
+   LOADING & EMPTY STATES
+   ============================================ */
+
+.loading-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  min-height: 200px;
+}
+
+.spinner {
+  border: 3px solid var(--border-color);
+  border-top: 3px solid var(--primary-color);
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  animation: spin 1s linear infinite;
+  margin-bottom: 1rem;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  color: var(--text-light);
+}
+
+.empty-icon {
+  font-size: 3rem;
+  margin-bottom: 1rem;
+}
+
+/* ============================================
+   RISK INDICATORS
+   ============================================ */
+
+.risk-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem 1.5rem;
+  border-radius: 0.75rem;
+  font-weight: 600;
+  margin-bottom: 1rem;
+  border-left: 4px solid;
+}
+
+.risk-low {
+  background-color: #d1fae5;
+  color: #065f46;
+  border-left-color: #10b981;
+}
+
+.risk-low .risk-level,
+.risk-low .risk-score {
+  color: #065f46;
+}
+
+.risk-moderate {
+  background-color: #fef3c7;
+  color: #92400e;
+  border-left-color: #f59e0b;
+}
+
+.risk-moderate .risk-level,
+.risk-moderate .risk-score {
+  color: #92400e;
+}
+
+.risk-high {
+  background-color: #fee2e2;
+  color: #7f1d1d;
+  border-left-color: #ef4444;
+}
+
+.risk-high .risk-level,
+.risk-high .risk-score {
+  color: #7f1d1d;
+}
+
+.risk-icon {
+  font-size: 1.5rem;
+}
+
+.risk-level {
+  font-size: 1.125rem;
+  font-weight: 700;
+}
+
+.risk-score {
+  font-size: 0.875rem;
+  margin-top: 0.25rem;
+  font-weight: 600;
+}
+
+.status-indicator {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  padding: 0.75rem 1.25rem;
+  border-radius: 0.5rem;
+  font-weight: 700;
+  font-size: 1rem;
+  background-color: #f3f4f6;
+  border: 2px solid #e5e7eb;
+  position: relative;
+  z-index: 1;
+  min-height: 2.5rem;
+}
+
+.status-within-target {
+  background-color: #d1fae5;
+  color: #065f46;
+  border-color: #10b981;
+}
+
+.status-controlled {
+  background-color: #d1fae5;
+  color: #065f46;
+  border-color: #10b981;
+}
+
+.status-above-target {
+  background-color: #fee2e2;
+  color: #7f1d1d;
+  border-color: #ef4444;
+}
+
+.status-critical {
+  background-color: #fee2e2;
+  color: #7f1d1d;
+  border-color: #ef4444;
+}
+
+.status-icon {
+  font-size: 1.25rem;
+  font-weight: bold;
+  line-height: 1;
+}
+
+.status-value {
+  font-weight: 700;
+  font-size: 1.1rem;
+}
+
+.status-target {
+  opacity: 0.85;
+  margin-left: 0.5rem;
+  font-size: 0.95rem;
+}
+
+/* ============================================
+   INPUT FIELDS
+   ============================================ */
+
+input[type="text"],
+input[type="email"],
+input[type="number"],
+input[type="datetime-local"],
+textarea,
+select {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid var(--border-color);
+  border-radius: 0.5rem;
+  font-size: 1rem;
+  font-family: inherit;
+  transition: border-color 0.3s;
+}
+
+input:focus,
+textarea:focus,
+select:focus {
+  outline: none;
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+/* ============================================
+   RESPONSIVE
+   ============================================ */
+
+/* ============================================
+   INPUT ELEMENTS
+   ============================================ */
+
+input[type="text"],
+input[type="number"],
+input[type="email"],
+input[type="password"],
+input[type="date"],
+input[type="datetime-local"],
+input[type="time"],
+select,
+textarea {
+  background-color: #ffffff;
+  color: #111827;
+  border: 1px solid #d1d5db;
+  padding: 0.625rem 0.75rem;
+  border-radius: 0.375rem;
+  font-family: inherit;
+  font-size: 1rem;
+}
+
+input[type="text"]:focus,
+input[type="number"]:focus,
+input[type="email"]:focus,
+input[type="password"]:focus,
+input[type="date"]:focus,
+input[type="datetime-local"]:focus,
+input[type="time"]:focus,
+select:focus,
+textarea:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+  background-color: #f0f9ff;
+}
+
+/* ============================================
+   RESPONSIVE
+   ============================================ */

@@ -1,0 +1,637 @@
+/* ============================================
+   TARGET IOP CALCULATOR STYLES
+   ============================================ */
+
+.target-iop-calculator {
+  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+  border-left: 4px solid #2563eb;
+  margin-bottom: 2rem;
+}
+
+.target-iop-calculator h2 {
+  color: #1e40af;
+  margin-bottom: 0.5rem;
+  font-size: 1.5rem;
+}
+
+.target-iop-calculator .info-text {
+  color: #666;
+  font-size: 0.9rem;
+  margin-bottom: 1.5rem;
+  font-style: italic;
+}
+
+.calculator-section {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.calculator-section .form-group:nth-child(3),
+.calculator-section .form-group:nth-child(4) {
+  grid-column: span 1;
+}
+
+.calculator-section .form-group:last-child {
+  grid-column: 1 / -1;
+}
+
+.form-group label {
+  display: block;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+  color: #333;
+  font-size: 0.95rem;
+}
+
+.iop-inputs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+.iop-inputs > div {
+  display: flex;
+  flex-direction: column;
+}
+
+.iop-inputs label {
+  font-size: 0.85rem;
+  margin-bottom: 0.25rem;
+}
+
+.iop-inputs input,
+.form-group select {
+  padding: 0.6rem;
+  border: 2px solid #ddd;
+  border-radius: 4px;
+  font-size: 0.95rem;
+  transition: border-color 0.3s;
+}
+
+.iop-inputs input:focus,
+.form-group select:focus {
+  outline: none;
+  border-color: #2563eb;
+  box-shadow: 0 0 5px rgba(37, 99, 235, 0.3);
+}
+
+.risk-factors-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+  margin-top: 1rem;
+  padding: 1rem;
+  background: rgba(255, 255, 255, 0.7);
+  border-radius: 6px;
+}
+
+.risk-factor-item {
+  display: flex;
+  flex-direction: column;
+}
+
+.risk-factor-item label {
+  font-size: 0.9rem;
+  margin-bottom: 0.3rem;
+}
+
+.risk-factor-item select {
+  padding: 0.5rem;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 0.9rem;
+}
+
+.btn-primary {
+  grid-column: 1 / -1;
+  padding: 0.8rem 1.5rem;
+  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.btn-primary:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.4);
+}
+
+.btn-primary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* ============================================
+   CALCULATOR RESULTS
+   ============================================ */
+
+.calculator-results {
+  background: white;
+  padding: 1.5rem;
+  border-radius: 8px;
+  border: 2px solid #10b981;
+  margin-top: 1.5rem;
+}
+
+.calculator-results h3 {
+  color: #10b981;
+  margin-bottom: 1rem;
+  font-size: 1.2rem;
+}
+
+.result-box {
+  background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%);
+  padding: 1rem;
+  border-radius: 6px;
+  margin-bottom: 1.5rem;
+  border-left: 4px solid #10b981;
+}
+
+.result-box h4 {
+  color: #065f46;
+  margin-bottom: 0.5rem;
+}
+
+.result-box p {
+  color: #047857;
+  margin: 0.25rem 0;
+}
+
+.results-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.result-eye {
+  background: #f9fafb;
+  padding: 1.2rem;
+  border-radius: 6px;
+  border: 2px solid #e5e7eb;
+}
+
+.result-eye h4 {
+  color: #1f2937;
+  margin-bottom: 1rem;
+  font-size: 1.1rem;
+}
+
+.result-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.6rem 0;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.result-item span {
+  color: #666;
+  font-size: 0.95rem;
+}
+
+.result-item strong {
+  color: #1f2937;
+  font-weight: 700;
+  font-size: 1.1rem;
+}
+
+.target-value {
+  color: #10b981 !important;
+  font-size: 1.3rem !important;
+}
+
+.range-value {
+  color: #7c3aed;
+  font-weight: 600;
+}
+
+.recommendation-box {
+  background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+  padding: 1rem;
+  border-radius: 6px;
+  border-left: 4px solid #f59e0b;
+  margin-bottom: 1rem;
+}
+
+.recommendation-box h4 {
+  color: #92400e;
+  margin-bottom: 0.5rem;
+}
+
+.recommendation-box p {
+  color: #78350f;
+  margin: 0;
+  line-height: 1.5;
+}
+
+.btn-success {
+  width: 100%;
+  padding: 0.8rem 1.5rem;
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.btn-success:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
+}
+
+/* ============================================
+   TARGET IOP DISPLAY
+   ============================================ */
+
+.target-display {
+  border-left: 4px solid #7c3aed;
+  margin-bottom: 2rem;
+}
+
+.target-display h3 {
+  color: #6d28d9;
+  margin-bottom: 1.5rem;
+  font-size: 1.3rem;
+}
+
+.target-display.warning {
+  background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+  border-left-color: #f59e0b;
+}
+
+.target-display.warning h3 {
+  color: #92400e;
+}
+
+.target-comparison {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.comparison-eye {
+  padding: 1.2rem;
+  border-radius: 8px;
+  border: 2px solid #e5e7eb;
+}
+
+.comparison-eye.status-within_target {
+  background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%);
+  border-color: #10b981;
+}
+
+.comparison-eye.status-above_target {
+  background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
+  border-color: #ef4444;
+}
+
+.comparison-eye h4 {
+  color: #1f2937;
+  margin-bottom: 1rem;
+  font-size: 1.1rem;
+}
+
+.comparison-values {
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+  margin-bottom: 1rem;
+}
+
+.value-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.6rem 0;
+}
+
+.value-item .label {
+  color: #666;
+  font-size: 0.9rem;
+}
+
+.value-item .current-value,
+.value-item .target-value,
+.value-item .range-value {
+  font-weight: 700;
+  font-size: 1rem;
+}
+
+.value-item .current-value {
+  color: #1f2937;
+}
+
+.value-item .target-value {
+  color: #7c3aed;
+}
+
+.value-item .range-value {
+  color: #2563eb;
+}
+
+.status-indicator {
+  padding: 0.8rem;
+  border-radius: 6px;
+  text-align: center;
+  font-weight: 600;
+}
+
+.status-indicator.status-within_target {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.status-indicator.status-above_target {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.status-icon {
+  font-size: 1.5rem;
+  margin-right: 0.5rem;
+}
+
+.status-text {
+  font-size: 1rem;
+}
+
+.target-info {
+  background: #f9fafb;
+  padding: 1rem;
+  border-radius: 6px;
+  border-left: 3px solid #7c3aed;
+}
+
+.info-label {
+  margin: 0.3rem 0;
+  color: #666;
+  font-size: 0.9rem;
+}
+
+/* ============================================
+   RISK ASSESSMENT PANEL
+   ============================================ */
+
+.risk-panel {
+  border-left: 4px solid #ef4444;
+  margin-bottom: 2rem;
+}
+
+.risk-panel h3 {
+  color: #991b1b;
+  margin-bottom: 1.5rem;
+  font-size: 1.3rem;
+}
+
+.risk-panel.error {
+  background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
+}
+
+.risk-panel.error h3 {
+  color: #991b1b;
+}
+
+.error-message {
+  background: white;
+  padding: 1rem;
+  border-radius: 6px;
+  border: 2px solid #ef4444;
+}
+
+.error-message p {
+  color: #7f1d1d;
+  margin: 0.5rem 0;
+}
+
+.error-message .hint {
+  color: #991b1b;
+  font-size: 0.95rem;
+  line-height: 1.6;
+}
+
+.risk-panel.risk-low {
+  border-left-color: #10b981;
+}
+
+.risk-panel.risk-moderate {
+  border-left-color: #f59e0b;
+}
+
+.risk-panel.risk-high {
+  border-left-color: #ef4444;
+}
+
+.risk-main-display {
+  margin-bottom: 1.5rem;
+  text-align: center;
+}
+
+.risk-badge-large {
+  display: inline-flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1.2rem 2rem;
+  border-radius: 12px;
+  border: 3px solid;
+  font-weight: 700;
+}
+
+.risk-badge-large.risk-low {
+  background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%);
+  border-color: #10b981;
+}
+
+.risk-badge-large.risk-moderate {
+  background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+  border-color: #f59e0b;
+}
+
+.risk-badge-large.risk-high {
+  background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
+  border-color: #ef4444;
+}
+
+.risk-icon {
+  font-size: 2.5rem;
+}
+
+.risk-info {
+  text-align: left;
+}
+
+.risk-level {
+  font-size: 1.5rem;
+  color: #1f2937;
+}
+
+.risk-score {
+  font-size: 1rem;
+  color: #666;
+  margin-top: 0.25rem;
+}
+
+.risk-section {
+  margin-bottom: 1.5rem;
+  padding-bottom: 1.5rem;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.risk-section h4 {
+  color: #1f2937;
+  margin-bottom: 0.8rem;
+  font-size: 1.1rem;
+}
+
+.status-box {
+  padding: 0.8rem;
+  border-radius: 6px;
+  font-weight: 600;
+  text-align: center;
+}
+
+.status-box.status-within_target {
+  background: #ecfdf5;
+  color: #065f46;
+  border: 2px solid #10b981;
+}
+
+.status-box.status-above_target {
+  background: #fee2e2;
+  color: #7f1d1d;
+  border: 2px solid #ef4444;
+}
+
+.status-label {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.risk-reasons {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.risk-reasons li {
+  padding: 0.5rem 0;
+  color: #555;
+  line-height: 1.5;
+}
+
+.followup-info {
+  background: #f9fafb;
+  padding: 1rem;
+  border-radius: 6px;
+  border-left: 3px solid #2563eb;
+}
+
+.followup-days {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.followup-days .label,
+.followup-actions .label {
+  color: #666;
+  font-weight: 600;
+}
+
+.followup-days .value {
+  font-size: 1.3rem;
+  color: #2563eb;
+  font-weight: 700;
+}
+
+.followup-actions {
+  margin-top: 1rem;
+}
+
+.followup-actions ul {
+  list-style: none;
+  padding: 0;
+  margin-top: 0.5rem;
+}
+
+.followup-actions li {
+  padding: 0.4rem 0;
+  color: #555;
+  font-size: 0.95rem;
+}
+
+.clinical-text {
+  background: #f3f4f6;
+  padding: 1rem;
+  border-radius: 6px;
+  color: #555;
+  line-height: 1.6;
+  margin: 0;
+}
+
+.btn-secondary {
+  margin-top: 1rem;
+  padding: 0.6rem 1.2rem;
+  background: #6b7280;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: all 0.3s;
+}
+
+.btn-secondary:hover {
+  background: #4b5563;
+  transform: translateY(-2px);
+}
+
+.btn-small {
+  font-size: 0.9rem;
+  padding: 0.5rem 1rem;
+}
+
+.loading {
+  color: #666;
+  font-style: italic;
+  text-align: center;
+  padding: 2rem;
+}
+
+/* ============================================
+   RESPONSIVE DESIGN
+   ============================================ */
+
+@media (max-width: 768px) {
+  .calculator-section {
+    grid-template-columns: 1fr;
+  }
+
+  .results-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .target-comparison {
+    grid-template-columns: 1fr;
+  }
+
+  .risk-factors-grid {
+    grid-template-columns: 1fr;
+  }
+}
+

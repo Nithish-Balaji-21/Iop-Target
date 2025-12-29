@@ -86,7 +86,7 @@ function App() {
 
       {/* Footer */}
       <footer className="app-footer">
-        <p>&copy; 2024 Glaucoma IOP Monitoring System - Hackathon Project</p>
+        <p>&copy; 2026 Glaucoma IOP Monitoring System - Hackathon Project</p>
         <p className="backend-info">Backend: {isHealthy ? '✓ Running' : '✗ Offline'}</p>
       </footer>
     </div>

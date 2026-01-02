@@ -1,0 +1,365 @@
+/* ============================================
+   TARGET IOP CALCULATOR STYLES
+   Sleek & Modern Design
+   ============================================ */
+
+.target-iop-calculator {
+  background: white;
+  border-radius: 12px;
+  padding: 2rem;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+  border: 2px solid #e2e8f0;
+  border-left: 6px solid #3b82f6;
+  animation: fadeIn 0.5s ease-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.target-iop-calculator h2 {
+  color: #0f172a;
+  margin: 0 0 0.75rem 0;
+  font-size: 1.75rem;
+  font-weight: 800;
+}
+
+.target-iop-calculator .info-text {
+  color: #64748b;
+  font-size: 1rem;
+  margin-bottom: 2rem;
+  font-style: italic;
+  font-weight: 500;
+}
+
+/* ============================================
+   CALCULATOR SECTIONS
+   ============================================ */
+.calculator-section {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.form-group {
+  margin-bottom: 1.5rem;
+}
+
+.form-group label {
+  display: block;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+  color: #334155;
+  font-size: 0.875rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.iop-inputs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+.iop-inputs > div {
+  display: flex;
+  flex-direction: column;
+}
+
+.iop-inputs label {
+  font-size: 0.875rem;
+  margin-bottom: 0.5rem;
+  color: #64748b;
+}
+
+.iop-inputs input,
+.form-group select {
+  padding: 0.875rem 1rem;
+  border: 2px solid #e2e8f0;
+  border-radius: 8px;
+  font-size: 1rem;
+  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+  color: #0f172a;
+  font-weight: 500;
+  transition: all 0.3s;
+}
+
+.iop-inputs input:focus,
+.form-group select:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+  background: #ffffff;
+}
+
+/* ============================================
+   RISK FACTORS GRID
+   ============================================ */
+.risk-factors-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+  margin-top: 1.5rem;
+  padding: 1.5rem;
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+  border-radius: 10px;
+  border: 2px solid #e2e8f0;
+}
+
+.risk-factor-item {
+  display: flex;
+  flex-direction: column;
+}
+
+.risk-factor-item label {
+  font-size: 0.875rem;
+  margin-bottom: 0.5rem;
+  color: #475569;
+  font-weight: 600;
+  text-transform: none;
+}
+
+.risk-factor-item select {
+  padding: 0.75rem 0.875rem;
+  border: 2px solid #cbd5e1;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  background: white;
+  color: #0f172a;
+  font-weight: 500;
+  transition: all 0.3s;
+}
+
+.risk-factor-item select:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+}
+
+/* ============================================
+   BUTTONS
+   ============================================ */
+.btn-primary {
+  grid-column: 1 / -1;
+  padding: 1rem 2rem;
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  color: white;
+  border: none;
+  border-radius: 10px;
+  font-size: 1.125rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.3s;
+  box-shadow: 0 4px 6px -1px rgba(59, 130, 246, 0.3);
+  margin-top: 1rem;
+}
+
+.btn-primary:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 20px -5px rgba(59, 130, 246, 0.4);
+}
+
+.btn-primary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* ============================================
+   CALCULATOR RESULTS
+   ============================================ */
+.calculator-results {
+  background: white;
+  padding: 2rem;
+  border-radius: 12px;
+  border: 3px solid #10b981;
+  margin-top: 2rem;
+  box-shadow: 0 10px 25px -5px rgba(16, 185, 129, 0.2);
+  animation: slideUp 0.5s ease-out;
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.calculator-results h3 {
+  color: #10b981;
+  margin: 0 0 1.5rem 0;
+  font-size: 1.5rem;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.result-box {
+  background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
+  padding: 1.5rem;
+  border-radius: 10px;
+  margin-bottom: 1.5rem;
+  border-left: 5px solid #10b981;
+  box-shadow: 0 4px 6px -1px rgba(16, 185, 129, 0.1);
+}
+
+.result-box h4 {
+  color: #065f46;
+  margin: 0 0 0.75rem 0;
+  font-size: 1.125rem;
+  font-weight: 700;
+}
+
+.result-box p {
+  color: #047857;
+  margin: 0.5rem 0;
+  font-weight: 600;
+  font-size: 1rem;
+}
+
+/* ============================================
+   RESULTS GRID
+   ============================================ */
+.results-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.result-eye {
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+  padding: 1.5rem;
+  border-radius: 12px;
+  border: 2px solid #cbd5e1;
+  transition: all 0.3s;
+}
+
+.result-eye:hover {
+  border-color: #3b82f6;
+  box-shadow: 0 8px 20px rgba(59, 130, 246, 0.15);
+  transform: translateY(-2px);
+}
+
+.result-eye h4 {
+  color: #0f172a;
+  margin: 0 0 1.25rem 0;
+  font-size: 1.25rem;
+  font-weight: 700;
+}
+
+.result-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.875rem 0;
+  border-bottom: 2px solid #e2e8f0;
+}
+
+.result-item:last-child {
+  border-bottom: none;
+}
+
+.result-item span {
+  color: #64748b;
+  font-size: 0.875rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.result-item strong {
+  color: #0f172a;
+  font-weight: 700;
+  font-size: 1.25rem;
+}
+
+.target-value {
+  color: #10b981 !important;
+  font-size: 1.5rem !important;
+  font-weight: 800 !important;
+}
+
+.range-value {
+  color: #7c3aed;
+  font-weight: 700;
+  font-size: 1.125rem;
+}
+
+/* ============================================
+   RECOMMENDATION BOX
+   ============================================ */
+.recommendation-box {
+  background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+  padding: 1.5rem;
+  border-radius: 10px;
+  border-left: 5px solid #f59e0b;
+  margin-bottom: 1.5rem;
+  box-shadow: 0 4px 6px -1px rgba(245, 158, 11, 0.1);
+}
+
+.recommendation-box h4 {
+  color: #92400e;
+  margin: 0 0 0.75rem 0;
+  font-size: 1.125rem;
+  font-weight: 700;
+}
+
+.recommendation-box p {
+  color: #78350f;
+  margin: 0;
+  line-height: 1.7;
+  font-weight: 500;
+}
+
+/* ============================================
+   SUCCESS BUTTON
+   ============================================ */
+.btn-success {
+  width: 100%;
+  padding: 1rem 2rem;
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: white;
+  border: none;
+  border-radius: 10px;
+  font-size: 1.125rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.3s;
+  box-shadow: 0 4px 6px -1px rgba(16, 185, 129, 0.3);
+}
+
+.btn-success:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 20px -5px rgba(16, 185, 129, 0.4);
+}
+
+/* ============================================
+   RESPONSIVE DESIGN
+   ============================================ */
+@media (max-width: 768px) {
+  .calculator-section {
+    grid-template-columns: 1fr;
+  }
+
+  .results-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .risk-factors-grid {
+    grid-template-columns: 1fr;
+  }
+}

@@ -13,6 +13,7 @@ class RiskEngine:
     # IOP Status Constants
     WITHIN_TARGET = "WITHIN_TARGET"
     ABOVE_TARGET = "ABOVE_TARGET"
+    BELOW_TARGET = "BELOW_TARGET"
     
     # Risk Levels
     LOW_RISK = "LOW"
@@ -23,24 +24,52 @@ class RiskEngine:
     def evaluate_iop_status(
         measured_iop: float,
         target_iop: float,
-        tolerance: float = 3.0
+        tolerance: float = None
     ) -> Tuple[str, int]:
         """
-        Evaluate if measured IOP is within target range.
-        Green: Within target (+/- tolerance)
-        Red: Above target (any amount above tolerance)
+        Evaluate if measured IOP is within acceptable target range.
+        Accounts for measurements both above AND below target.
+        
+        Tolerance is now PROPORTIONAL to target (15% of target, min 2 mmHg):
+        - Target 18 mmHg → tolerance ~2.7 mmHg
+        - Target 14 mmHg → tolerance ~2.1 mmHg
+        - Target 12 mmHg → tolerance ~2.0 mmHg (min)
+        
+        Status:
+        - WITHIN_TARGET: |measured - target| <= tolerance
+        - ABOVE_TARGET: measured > target + tolerance (severity based on overage)
+        - BELOW_TARGET: measured < target - tolerance (severity based on underage, less severe)
         
         Returns:
             (status, severity_score) where severity_score is 0-30
         """
-        difference = measured_iop - target_iop
+        # Calculate proportional tolerance (15% of target, minimum 2 mmHg)
+        if tolerance is None:
+            tolerance = max(2.0, target_iop * 0.15)
         
-        if difference <= tolerance:
+        difference = measured_iop - target_iop
+        abs_difference = abs(difference)
+        
+        # Check if within acceptable tolerance band
+        if abs_difference <= tolerance:
+            # Measurement is within target range ✓
             return RiskEngine.WITHIN_TARGET, 0
-        else:
-            # Any amount above target = red, severity increases with overage
-            severity = min(30, int((difference - tolerance) * 3))
+        
+        # Above target (pressure too high) - more concerning
+        elif difference > tolerance:
+            # Amount above target × weight factor
+            # Severity increases more steeply for lower targets
+            overage = difference - tolerance
+            weight = 3.0 + (18 - target_iop) * 0.2  # Higher weight for lower targets
+            severity = min(30, int(overage * weight))
             return RiskEngine.ABOVE_TARGET, severity
+        
+        # Below target (pressure too low/hypotony) - also concerning but less severe
+        else:  # difference < -tolerance
+            # Amount below target × weight factor (less aggressive than above)
+            underage = abs_difference - tolerance
+            severity = min(20, int(underage * 2))
+            return RiskEngine.BELOW_TARGET, severity
     
     @staticmethod
     def assess_rnfl_progression(
@@ -77,8 +106,15 @@ class RiskEngine:
     ) -> Tuple[str, int]:
         """
         Assess Visual Field (VF) Mean Deviation progression.
-        Higher (less negative) MD = worse function
-        Red flag: >1 dB/year progression (MD getting worse)
+        
+        MD values are typically NEGATIVE (e.g., -3 dB, -12 dB)
+        MORE NEGATIVE = WORSE visual field loss
+        
+        Example:
+        - Previous MD: -6 dB, Current MD: -9 dB → WORSENING (loss of 3 dB)
+        - Previous MD: -9 dB, Current MD: -6 dB → IMPROVING (gain of 3 dB)
+        
+        Red flag: >1 dB/year worsening (MD becoming more negative)
         
         Returns:
             (status, severity_score) where severity_score is 0-25
@@ -86,13 +122,16 @@ class RiskEngine:
         if not previous_measurements or len(previous_measurements) < 2:
             return "BASELINE", 0
         
-        # MD becomes more negative with VF loss, so worse is higher (less negative)
+        # Calculate change: negative change = worsening (MD becoming more negative)
+        # current_md - previous = negative means current is more negative (worse)
         change_per_month = (current_md - previous_measurements[-1]) / max(months_between_visits, 1)
         annual_change = change_per_month * 12
         
-        if annual_change > 1.0:  # Significant worsening
-            return "PROGRESSIVE", min(25, int(annual_change * 10))
-        elif annual_change > 0.5:  # Moderate worsening
+        # NEGATIVE annual_change means MD is getting MORE NEGATIVE = WORSENING
+        # So we check if annual_change < -1.0 for significant worsening
+        if annual_change < -1.0:  # Significant worsening (MD dropping >1 dB/year)
+            return "PROGRESSIVE", min(25, int(abs(annual_change) * 10))
+        elif annual_change < -0.5:  # Moderate worsening
             return "MARGINAL", 10
         else:
             return "STABLE", 0

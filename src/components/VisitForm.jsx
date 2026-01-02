@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { riskService } from '../services/api';
-import '../styles/Forms.css';
+import '../styles/VisitForm.css';
 
 function VisitForm({ patientId, onSuccess, onCancel }) {
   const [formData, setFormData] = useState({
@@ -73,9 +73,6 @@ function VisitForm({ patientId, onSuccess, onCancel }) {
             required
           />
         </div>
-      </div>
-
-      <div className="form-row">
         <div className="form-group">
           <label>Visit Type</label>
           <select name="visit_type" value={formData.visit_type} onChange={handleChange} required>
@@ -86,49 +83,57 @@ function VisitForm({ patientId, onSuccess, onCancel }) {
         </div>
       </div>
 
-      <div className="form-group">
-        <label>Clinical Findings</label>
-        <textarea
-          name="findings"
-          placeholder="Description of clinical findings..."
-          value={formData.findings}
-          onChange={handleChange}
-          rows="3"
-        />
+      <div className="form-row full">
+        <div className="form-group">
+          <label>Clinical Findings</label>
+          <textarea
+            name="findings"
+            placeholder="Description of clinical findings..."
+            value={formData.findings}
+            onChange={handleChange}
+            rows="3"
+          />
+        </div>
       </div>
 
-      <div className="form-group">
-        <label>Treatment Changes</label>
-        <textarea
-          name="treatment_changes"
-          placeholder="Any changes to medication or treatment plan..."
-          value={formData.treatment_changes}
-          onChange={handleChange}
-          rows="3"
-        />
+      <div className="form-row full">
+        <div className="form-group">
+          <label>Treatment Changes</label>
+          <textarea
+            name="treatment_changes"
+            placeholder="Any changes to medication or treatment plan..."
+            value={formData.treatment_changes}
+            onChange={handleChange}
+            rows="3"
+          />
+        </div>
       </div>
 
-      <div className="form-group">
-        <label>Doctor Notes</label>
-        <textarea
-          name="doctor_notes"
-          placeholder="Additional doctor observations..."
-          value={formData.doctor_notes}
-          onChange={handleChange}
-          rows="3"
-        />
+      <div className="form-row full">
+        <div className="form-group">
+          <label>Doctor Notes</label>
+          <textarea
+            name="doctor_notes"
+            placeholder="Additional doctor observations..."
+            value={formData.doctor_notes}
+            onChange={handleChange}
+            rows="3"
+          />
+        </div>
       </div>
 
-      <div className="form-group">
-        <label>Created By (Doctor Name)</label>
-        <input
-          type="text"
-          name="created_by"
-          placeholder="Your name"
-          value={formData.created_by}
-          onChange={handleChange}
-          required
-        />
+      <div className="form-row full">
+        <div className="form-group">
+          <label>Created By (Doctor Name)</label>
+          <input
+            type="text"
+            name="created_by"
+            placeholder="Your name"
+            value={formData.created_by}
+            onChange={handleChange}
+            required
+          />
+        </div>
       </div>
 
       <div className="form-actions">

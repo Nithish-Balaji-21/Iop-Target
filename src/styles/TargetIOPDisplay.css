@@ -1,0 +1,387 @@
+/* ============================================
+   TARGET IOP DISPLAY STYLES
+   Clean & Modern Design
+   ============================================ */
+
+.target-display {
+  background: white;
+  border-radius: 16px;
+  padding: 2rem;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  border: 1px solid #e2e8f0;
+  animation: fadeIn 0.4s ease-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.target-display h3 {
+  color: #1e293b;
+  margin: 0 0 1.5rem 0;
+  font-size: 1.5rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding-bottom: 1rem;
+  border-bottom: 2px solid #f1f5f9;
+}
+
+/* ============================================
+   WARNING STATE
+   ============================================ */
+.target-display.warning {
+  background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%);
+  border: 2px solid #fbbf24;
+}
+
+.target-display.warning h3 {
+  color: #92400e;
+  border-bottom-color: #fde68a;
+}
+
+.target-display.warning p {
+  color: #78350f;
+  font-weight: 500;
+  font-size: 1.1rem;
+  line-height: 1.6;
+  margin: 0;
+}
+
+/* ============================================
+   TARGET COMPARISON CARDS
+   ============================================ */
+.target-comparison {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.comparison-eye {
+  padding: 1.5rem;
+  border-radius: 12px;
+  border: 2px solid #e2e8f0;
+  background: #f8fafc;
+  transition: all 0.3s ease;
+}
+
+.comparison-eye:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+}
+
+.comparison-eye.status-within_target {
+  background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%);
+  border-color: #10b981;
+}
+
+.comparison-eye.status-above_target {
+  background: linear-gradient(135deg, #fef2f2 0%, #fecaca 100%);
+  border-color: #ef4444;
+}
+
+.comparison-eye.status-below_target {
+  background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%);
+  border-color: #f59e0b;
+}
+
+.comparison-eye h4 {
+  color: #1e293b;
+  margin: 0 0 1rem 0;
+  font-size: 1.1rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.comparison-eye h4::before {
+  content: '👁️';
+}
+
+/* ============================================
+   COMPARISON VALUES
+   ============================================ */
+.comparison-values {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.value-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem 1rem;
+  background: rgba(255, 255, 255, 0.8);
+  border-radius: 8px;
+  border: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.value-item.current {
+  border-left: 3px solid #3b82f6;
+}
+
+.value-item.target {
+  border-left: 3px solid #8b5cf6;
+}
+
+.value-item .label {
+  color: #64748b;
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.value-item .current-value {
+  font-weight: 700;
+  font-size: 1.1rem;
+  color: #1e293b;
+}
+
+.value-item .target-value {
+  font-weight: 700;
+  font-size: 1.1rem;
+  color: #7c3aed;
+}
+
+/* ============================================
+   STATUS INDICATOR
+   ============================================ */
+.status-indicator {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.75rem 1rem;
+  border-radius: 8px;
+  font-weight: 600;
+  gap: 0.5rem;
+  transition: all 0.2s ease;
+}
+
+.status-indicator.status-within_target {
+  background: #10b981;
+  color: white;
+}
+
+.status-indicator.status-above_target {
+  background: #ef4444;
+  color: white;
+}
+
+.status-indicator.status-below_target {
+  background: #f59e0b;
+  color: white;
+}
+
+.status-icon {
+  font-size: 1.2rem;
+}
+
+.status-text {
+  font-size: 0.95rem;
+}
+
+/* ============================================
+   PRESSURE GAUGES
+   ============================================ */
+.pressure-gauges {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+  margin-bottom: 1.5rem;
+  padding: 1.5rem;
+  background: #f8fafc;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+}
+
+.gauge-container {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.gauge-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.gauge-title {
+  font-weight: 600;
+  color: #475569;
+  font-size: 0.9rem;
+}
+
+.gauge-reading {
+  font-weight: 700;
+  color: #1e293b;
+  font-size: 0.95rem;
+  background: white;
+  padding: 0.25rem 0.75rem;
+  border-radius: 6px;
+  border: 1px solid #e2e8f0;
+}
+
+.gauge-track {
+  position: relative;
+  height: 24px;
+  border-radius: 12px;
+  overflow: visible;
+  background: #e2e8f0;
+}
+
+.gauge-zones {
+  display: flex;
+  height: 100%;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.gauge-zones .zone {
+  flex: 1;
+}
+
+.gauge-zones .zone.low {
+  background: linear-gradient(90deg, #fbbf24 0%, #84cc16 100%);
+}
+
+.gauge-zones .zone.target {
+  background: linear-gradient(90deg, #84cc16 0%, #22c55e 50%, #84cc16 100%);
+}
+
+.gauge-zones .zone.high {
+  background: linear-gradient(90deg, #84cc16 0%, #ef4444 100%);
+}
+
+.gauge-marker {
+  position: absolute;
+  top: -8px;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  z-index: 10;
+  transition: left 0.3s ease;
+}
+
+.marker-dot {
+  width: 16px;
+  height: 16px;
+  background: #1e293b;
+  border: 3px solid white;
+  border-radius: 50%;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+.marker-label {
+  margin-top: 4px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #1e293b;
+  background: white;
+  padding: 2px 6px;
+  border-radius: 4px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.15);
+  white-space: nowrap;
+}
+
+.gauge-target-line {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  background: #7c3aed;
+  transform: translateX(-50%);
+  border-radius: 2px;
+}
+
+.gauge-labels {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.75rem;
+  color: #64748b;
+  font-weight: 500;
+  padding: 0 0.25rem;
+}
+
+.gauge-labels span:nth-child(2) {
+  color: #7c3aed;
+  font-weight: 600;
+}
+
+/* ============================================
+   TARGET INFO
+   ============================================ */
+.target-info {
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+  padding: 1.25rem;
+  border-radius: 10px;
+  border: 1px solid #e2e8f0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.info-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+}
+
+.info-icon {
+  font-size: 1rem;
+  flex-shrink: 0;
+}
+
+.info-content {
+  color: #475569;
+  font-size: 0.95rem;
+  line-height: 1.5;
+}
+
+.info-content strong {
+  color: #1e293b;
+  font-weight: 600;
+}
+
+/* ============================================
+   RESPONSIVE DESIGN
+   ============================================ */
+@media (max-width: 768px) {
+  .target-comparison {
+    grid-template-columns: 1fr;
+  }
+
+  .pressure-gauges {
+    grid-template-columns: 1fr;
+  }
+
+  .target-display {
+    padding: 1.25rem;
+  }
+
+  .target-display h3 {
+    font-size: 1.25rem;
+  }
+
+  .comparison-eye {
+    padding: 1rem;
+  }
+
+  .value-item {
+    padding: 0.5rem 0.75rem;
+  }
+}

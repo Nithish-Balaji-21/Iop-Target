@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Text, DateTime, Boolean
+from sqlalchemy import Column, Integer, String, Text, DateTime, Boolean, Float
 from sqlalchemy.orm import relationship
 from datetime import datetime
 from app.database import Base
@@ -12,9 +12,19 @@ class Patient(Base):
     age = Column(Integer)
     gender = Column(String(10))  # M, F, O
     
+    # Baseline (First Untreated) IOP values
+    baseline_iop_od = Column(Float, nullable=True)  # First untreated IOP - Right Eye
+    baseline_iop_os = Column(Float, nullable=True)  # First untreated IOP - Left Eye
+    
     # Glaucoma-specific fields
     glaucoma_type = Column(String(50))  # POAG, ANGLE_CLOSURE, etc
-    disease_severity = Column(String(50))  # MILD, MODERATE, SEVERE
+    disease_severity = Column(String(20), default="MODERATE")  # MILD, MODERATE, SEVERE
+    
+    # Eye-specific glaucoma stage (per eye)
+    # EARLY = EMGT/OHTS (cap ≤18), NORMAL_TENSION = CNGTS (cap ≤16), 
+    # ADVANCED = AGIS (cap ≤14), END_STAGE (cap ≤12)
+    glaucoma_stage_od = Column(String(20), default="EARLY")  # Right eye stage
+    glaucoma_stage_os = Column(String(20), default="EARLY")  # Left eye stage
     
     # Eye-specific data
     od_status = Column(String(50), default="BOTH")  # OD, OS, BOTH

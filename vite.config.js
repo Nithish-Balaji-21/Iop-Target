@@ -10,4 +10,9 @@ export default defineConfig({
       },
     }),
   ],
+  server: {
+    watch: {
+      ignored: ['**/.venv/**', '**/backend/**', '**/__pycache__/**']
+    }
+  }
 })

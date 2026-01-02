@@ -1,220 +1,1048 @@
 /* ============================================
    TREND CHART STYLES
+   Premium Professional Design
+   ============================================ */
+
+/* Main Container */
+.trend-chart-container {
+  background: white;
+  border-radius: 20px;
+  padding: 2rem;
+  box-shadow: 
+    0 4px 6px -1px rgba(0, 0, 0, 0.05),
+    0 10px 20px -5px rgba(0, 0, 0, 0.05);
+  border: 1px solid #e2e8f0;
+  animation: chartFadeIn 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.trend-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+  padding-bottom: 1rem;
+  border-bottom: 2px solid #f1f5f9;
+}
+
+.trend-header h3 {
+  background: linear-gradient(135deg, #0f172a 0%, #334155 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  margin: 0;
+  font-size: 1.35rem;
+  font-weight: 800;
+}
+
+.measurement-count {
+  background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+  color: white;
+  padding: 0.4rem 1rem;
+  border-radius: 20px;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+/* Charts Grid - Side by Side */
+.charts-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+}
+
+@media (max-width: 900px) {
+  .charts-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Individual Eye Chart */
+.eye-chart {
+  background: linear-gradient(180deg, #fafbfc 0%, #f1f5f9 100%);
+  border-radius: 16px;
+  padding: 1.25rem;
+  border: 2px solid #e2e8f0;
+}
+
+.eye-chart.od {
+  border-color: #3b82f6;
+}
+
+.eye-chart.os {
+  border-color: #10b981;
+}
+
+.eye-chart .chart-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.eye-chart .chart-header h4 {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 700;
+  color: #0f172a;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.eye-icon {
+  font-size: 1.2rem;
+}
+
+.target-badge {
+  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+  color: white;
+  padding: 0.3rem 0.75rem;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.target-badge.overridden {
+  background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+}
+
+.upper-cap-badge {
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+  color: white;
+  padding: 0.3rem 0.75rem;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.no-target-badge {
+  background: linear-gradient(135deg, #94a3b8 0%, #64748b 100%);
+  color: white;
+  padding: 0.3rem 0.75rem;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.chart-badges {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+/* Chart Area */
+.eye-chart .chart-area {
+  display: flex;
+  gap: 0.5rem;
+  background: white;
+  border-radius: 12px;
+  padding: 1rem;
+  border: 1px solid #e2e8f0;
+  min-height: 280px;
+}
+
+/* Y-Axis */
+.eye-chart .y-axis {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding-right: 0.5rem;
+  min-width: 35px;
+  border-right: 2px solid #cbd5e1;
+  height: 200px;
+  margin-bottom: 28px; /* Align with chart area */
+}
+
+.eye-chart .y-label {
+  color: #475569;
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-align: right;
+  font-family: 'SF Mono', 'Consolas', monospace;
+}
+
+/* Single Bars Container */
+.single-bars-container {
+  flex: 1;
+  display: flex;
+  align-items: flex-end;
+  gap: 0.5rem;
+  position: relative;
+  padding: 0 0.5rem 28px 0.5rem;
+  height: 228px; /* 200px chart + 28px for labels */
+  background: 
+    repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 39px,
+      #e2e8f0 39px,
+      #e2e8f0 40px
+    );
+  border-bottom: 2px solid #cbd5e1;
+  box-sizing: border-box;
+}
+
+.single-bar-wrapper {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  height: 200px; /* Chart area height */
+  min-width: 40px;
+  max-width: 100px;
+  position: relative;
+}
+
+.single-bar {
+  width: 100%;
+  max-width: 30px;
+  border-radius: 4px 4px 0 0;
+  transition: all 0.3s ease;
+  cursor: pointer;
+  position: relative;
+  min-height: 4px;
+}
+
+.single-bar.od {
+  background: linear-gradient(180deg, #60a5fa 0%, #3b82f6 50%, #2563eb 100%);
+  box-shadow: 0 2px 8px -2px rgba(59, 130, 246, 0.5);
+}
+
+.single-bar.os {
+  background: linear-gradient(180deg, #34d399 0%, #10b981 50%, #059669 100%);
+  box-shadow: 0 2px 8px -2px rgba(16, 185, 129, 0.5);
+}
+
+.single-bar.above-target {
+  background: linear-gradient(180deg, #fca5a5 0%, #ef4444 50%, #dc2626 100%) !important;
+  box-shadow: 0 2px 8px -2px rgba(239, 68, 68, 0.5) !important;
+}
+
+.single-bar:hover {
+  transform: scaleY(1.05);
+  filter: brightness(1.1);
+}
+
+.single-bar .bar-value {
+  position: absolute;
+  top: -1.75rem;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #1f2937;
+  background: white;
+  padding: 0.15rem 0.4rem;
+  border-radius: 4px;
+  white-space: nowrap;
+  opacity: 1;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  border: 1px solid #e5e7eb;
+}
+
+.single-bar:hover .bar-value {
+  opacity: 1;
+  background: #0f172a;
+  color: white;
+}
+
+/* X Labels */
+.single-bar-wrapper .x-label {
+  position: absolute;
+  bottom: -24px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 0.7rem;
+  color: #475569;
+  font-weight: 600;
+  text-align: center;
+  white-space: nowrap;
+}
+
+/* Target Line */
+.single-bars-container .target-line {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: repeating-linear-gradient(
+    90deg,
+    #f59e0b,
+    #f59e0b 6px,
+    transparent 6px,
+    transparent 12px
+  );
+  pointer-events: none;
+  z-index: 10;
+}
+
+.single-bars-container .target-line.od {
+  background: repeating-linear-gradient(
+    90deg,
+    #3b82f6,
+    #3b82f6 6px,
+    transparent 6px,
+    transparent 12px
+  );
+}
+
+.single-bars-container .target-line.os {
+  background: repeating-linear-gradient(
+    90deg,
+    #10b981,
+    #10b981 6px,
+    transparent 6px,
+    transparent 12px
+  );
+}
+
+.target-line .target-label {
+  position: absolute;
+  right: -5px;
+  top: -8px;
+  background: #f59e0b;
+  color: white;
+  padding: 0.15rem 0.4rem;
+  border-radius: 4px;
+  font-size: 0.6rem;
+  font-weight: 700;
+}
+
+.target-line.od .target-label {
+  background: #3b82f6;
+}
+
+.target-line.os .target-label {
+  background: #10b981;
+}
+
+/* Eye Stats */
+.eye-stats {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0.75rem;
+  margin-top: 1.25rem;
+  padding-top: 1rem;
+  border-top: 2px solid #e5e7eb;
+}
+
+.eye-stats .stat-item {
+  background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+  padding: 0.75rem 0.5rem;
+  border-radius: 10px;
+  text-align: center;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.eye-stats .stat-label {
+  display: block;
+  font-size: 0.7rem;
+  color: #6b7280;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 0.35rem;
+}
+
+.eye-stats .stat-value {
+  display: block;
+  font-size: 1rem;
+  font-weight: 800;
+  color: #1e40af;
+}
+
+.eye-stats .stat-item:first-child .stat-value {
+  color: #dc2626;
+  font-size: 1.1rem;
+}
+
+.eye-stats .stat-value.above {
+  color: #ef4444;
+}
+
+.eye-stats .stat-value.within {
+  color: #10b981;
+}
+
+@media (max-width: 768px) {
+  .eye-stats {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* ============================================
+   LEGACY STYLES (kept for compatibility)
    ============================================ */
 
 .trend-chart {
   background: white;
-  border: 1px solid #e5e7eb;
-  border-radius: 0.75rem;
-  padding: 1.5rem;
-  margin-bottom: 2rem;
+  border-radius: 20px;
+  padding: 2rem;
+  box-shadow: 
+    0 4px 6px -1px rgba(0, 0, 0, 0.05),
+    0 10px 20px -5px rgba(0, 0, 0, 0.05);
+  border: 1px solid #e2e8f0;
+  animation: chartFadeIn 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@keyframes chartFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .trend-chart h3 {
-  margin-bottom: 1.5rem;
-  color: #111827;
+  background: linear-gradient(135deg, #0f172a 0%, #334155 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  margin: 0 0 1.5rem 0;
+  font-size: 1.35rem;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding-bottom: 1rem;
+  border-bottom: 2px solid #f1f5f9;
 }
 
+/* ============================================
+   CHART CONTAINER
+   ============================================ */
 .chart-container {
-  margin-bottom: 2rem;
+  background: linear-gradient(180deg, #fafbfc 0%, #f1f5f9 100%);
+  border-radius: 16px;
+  padding: 1.5rem;
+  border: 1px solid #e2e8f0;
+  position: relative;
 }
 
+/* ============================================
+   CHART LEGEND
+   ============================================ */
 .chart-legend {
   display: flex;
-  flex-wrap: wrap;
   gap: 1.5rem;
   margin-bottom: 1.5rem;
-  padding: 1rem;
-  background-color: #f9fafb;
-  border-radius: 0.5rem;
+  padding: 1rem 1.25rem;
+  background: white;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+  flex-wrap: wrap;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.03);
 }
 
 .legend-item {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  font-size: 0.875rem;
-  color: #6b7280;
+  font-weight: 600;
+  font-size: 0.85rem;
+  color: #475569;
 }
 
 .color-od {
-  color: #2563eb;
-  font-size: 1rem;
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+  border-radius: 4px;
+  box-shadow: 0 2px 4px rgba(59, 130, 246, 0.3);
 }
 
 .color-os {
-  color: #10b981;
-  font-size: 1rem;
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  border-radius: 4px;
+  box-shadow: 0 2px 4px rgba(16, 185, 129, 0.3);
 }
 
 .color-target {
-  color: #ef4444;
-  letter-spacing: 2px;
+  color: #f59e0b;
+  font-size: 1rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
 }
 
+/* ============================================
+   CHART AREA
+   ============================================ */
 .chart {
-  position: relative;
-  height: 300px;
   display: flex;
-  align-items: flex-end;
-  background-color: #f9fafb;
-  border-left: 2px solid #d1d5db;
-  border-bottom: 2px solid #d1d5db;
+  gap: 0;
+  position: relative;
+  height: 280px;
+  background: white;
+  border-radius: 12px;
   padding: 1rem;
-  border-radius: 0.5rem;
-  overflow-x: auto;
+  border: 1px solid #e2e8f0;
+  box-sizing: border-box;
 }
 
+/* ============================================
+   Y-AXIS
+   ============================================ */
 .y-axis {
-  position: absolute;
-  left: -40px;
-  top: 0;
-  height: 100%;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  width: 35px;
-  text-align: right;
+  padding-right: 0.75rem;
+  min-width: 35px;
+  border-right: 2px solid #e2e8f0;
+  margin-right: 1rem;
+  height: 100%;
 }
 
 .y-label {
-  font-size: 0.75rem;
-  color: #6b7280;
+  color: #64748b;
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-align: right;
+  font-family: 'SF Mono', 'Consolas', monospace;
 }
 
+/* ============================================
+   BARS CONTAINER
+   ============================================ */
 .bars-container {
+  flex: 1;
   display: flex;
-  gap: 1rem;
   align-items: flex-end;
-  justify-content: center;
-  width: 100%;
-  height: 100%;
+  gap: 0.5rem;
+  position: relative;
+  padding: 0 0.5rem;
+  height: 240px;
+  background: 
+    repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent calc(25% - 1px),
+      #f1f5f9 calc(25% - 1px),
+      #f1f5f9 25%
+    );
+  border-bottom: 2px solid #e2e8f0;
 }
 
 .bar-group {
+  flex: 1;
   display: flex;
-  gap: 0.25rem;
+  gap: 4px;
   align-items: flex-end;
+  justify-content: center;
   height: 100%;
-  min-width: 50px;
+  max-width: 80px;
+  min-height: 200px;
 }
 
 .bar {
-  width: 20px;
-  border-radius: 4px 4px 0 0;
-  display: flex;
-  align-items: flex-end;
-  justify-content: center;
+  width: 24px;
+  min-width: 16px;
+  max-width: 32px;
+  border-radius: 6px 6px 0 0;
   position: relative;
-  transition: opacity 0.3s;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  cursor: pointer;
+  min-height: 4px;
 }
 
 .bar:hover {
-  opacity: 0.8;
+  transform: scaleY(1.02) translateY(-2px);
+  filter: brightness(1.1);
 }
 
 .bar-od {
-  background-color: #2563eb;
+  background: linear-gradient(180deg, #60a5fa 0%, #3b82f6 50%, #2563eb 100%) !important;
+  box-shadow: 0 4px 12px -2px rgba(59, 130, 246, 0.4);
 }
 
 .bar-os {
-  background-color: #10b981;
+  background: linear-gradient(180deg, #34d399 0%, #10b981 50%, #059669 100%) !important;
+  box-shadow: 0 4px 12px -2px rgba(16, 185, 129, 0.4);
 }
 
 .bar-value {
-  font-size: 0.75rem;
-  color: #111827;
-  font-weight: 700;
-  padding: 2px;
-  text-align: center;
   position: absolute;
-  bottom: -20px;
+  top: -2rem;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: white;
+  background: linear-gradient(135deg, #0f172a 0%, #334155 100%);
+  padding: 0.3rem 0.6rem;
+  border-radius: 6px;
+  white-space: nowrap;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  opacity: 0;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  pointer-events: none;
+  z-index: 20;
 }
 
+.bar-value::after {
+  content: '';
+  position: absolute;
+  bottom: -4px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 0;
+  height: 0;
+  border-left: 5px solid transparent;
+  border-right: 5px solid transparent;
+  border-top: 5px solid #334155;
+}
+
+.bar:hover .bar-value {
+  opacity: 1;
+  transform: translateX(-50%) translateY(-4px);
+}
+
+/* ============================================
+   TARGET LINES
+   ============================================ */
 .target-line {
   position: absolute;
-  width: 100%;
+  left: 50px;
+  right: 1rem;
   height: 2px;
-  left: 0;
+  background: repeating-linear-gradient(
+    90deg,
+    #f59e0b,
+    #f59e0b 6px,
+    transparent 6px,
+    transparent 12px
+  );
+  pointer-events: none;
+  z-index: 10;
 }
 
-.target-od {
-  border-top: 2px dashed #2563eb;
+.target-line.target-od {
+  background: repeating-linear-gradient(
+    90deg,
+    #8b5cf6,
+    #8b5cf6 6px,
+    transparent 6px,
+    transparent 12px
+  );
 }
 
-.target-os {
-  border-top: 2px dashed #10b981;
+.target-line::before {
+  content: attr(title);
+  position: absolute;
+  right: 0;
+  top: -10px;
+  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+  color: white;
+  padding: 0.2rem 0.5rem;
+  border-radius: 4px;
+  font-size: 0.65rem;
+  font-weight: 700;
+  white-space: nowrap;
+  box-shadow: 0 2px 6px rgba(245, 158, 11, 0.3);
 }
 
+.target-line.target-od::before {
+  background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+  box-shadow: 0 2px 6px rgba(139, 92, 246, 0.3);
+}
+
+/* ============================================
+   X-AXIS LABELS
+   ============================================ */
 .x-axis {
   display: flex;
-  justify-content: center;
-  gap: 1rem;
-  margin-top: 2rem;
-  padding: 1rem 0;
-  overflow-x: auto;
+  margin-top: 0.75rem;
+  margin-left: 52px; /* Align with bars (y-axis width + margin) */
+  padding-right: 1rem;
+  gap: 0.5rem;
 }
 
 .x-label {
+  flex: 1;
+  color: #475569;
   font-size: 0.75rem;
-  color: #6b7280;
-  white-space: nowrap;
-  min-width: 50px;
+  font-weight: 600;
   text-align: center;
+  max-width: 80px;
+  padding: 0.5rem 0.25rem;
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+  border-radius: 6px;
+  border: 1px solid #e2e8f0;
 }
 
+/* ============================================
+   TREND SUMMARY
+   ============================================ */
 .trend-summary {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  grid-template-columns: repeat(4, 1fr);
   gap: 1rem;
   margin-top: 1.5rem;
   padding-top: 1.5rem;
-  border-top: 1px solid #e5e7eb;
+  border-top: 2px solid #f1f5f9;
 }
 
 .summary-item {
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+  padding: 1rem 1.25rem;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
   text-align: center;
+  transition: all 0.3s;
+}
+
+.summary-item:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  border-color: #cbd5e1;
 }
 
 .summary-item span {
   display: block;
-  color: #6b7280;
-  font-size: 0.875rem;
-  margin-bottom: 0.25rem;
+  font-size: 0.75rem;
+  color: #64748b;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 0.375rem;
 }
 
 .summary-item strong {
-  display: block;
   font-size: 1.5rem;
-  color: #111827;
+  font-weight: 800;
+  background: linear-gradient(135deg, #0f172a 0%, #334155 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* ============================================
+   RESPONSIVE DESIGN
+   ============================================ */
+@media (max-width: 900px) {
+  .trend-summary {
+    grid-template-columns: repeat(2, 1fr);
+  }
 }
 
 @media (max-width: 768px) {
-  .chart {
-    height: 200px;
-  }
-
-  .bars-container {
-    gap: 0.5rem;
-  }
-
-  .bar-group {
-    min-width: 35px;
-  }
-
-  .bar {
-    width: 15px;
+  .trend-chart {
+    padding: 1.5rem;
+    border-radius: 16px;
   }
 
   .chart-legend {
-    gap: 0.75rem;
+    gap: 1rem;
+    padding: 0.875rem 1rem;
   }
 
   .legend-item {
     font-size: 0.75rem;
   }
 
+  .chart {
+    height: 220px;
+  }
+
+  .bar {
+    min-width: 12px;
+    max-width: 24px;
+  }
+
+  .bar-group {
+    gap: 2px;
+  }
+
+  .bar-value {
+    font-size: 0.6rem;
+    padding: 0.2rem 0.4rem;
+  }
+
+  .x-label {
+    font-size: 0.6rem;
+  }
+
   .trend-summary {
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: 1fr 1fr;
+    gap: 0.75rem;
+  }
+
+  .summary-item {
+    padding: 0.875rem 1rem;
+  }
+
+  .summary-item strong {
+    font-size: 1.25rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .chart-legend {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .chart {
+    height: 180px;
+  }
+
+  .y-axis {
+    min-width: 28px;
+    padding-right: 0.5rem;
+    margin-right: 0.5rem;
+  }
+
+  .y-label {
+    font-size: 0.6rem;
+  }
+
+  .x-axis {
+    padding-left: 35px;
+  }
+}
+/* ============================================
+   ENHANCED PER-EYE CHART STYLES
+   ============================================ */
+
+/* Chart Badges Container */
+.chart-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.target-badge.overridden {
+  background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%);
+}
+
+.target-badge .override-indicator {
+  font-size: 0.65rem;
+  opacity: 0.9;
+}
+
+.upper-cap-badge {
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+  color: white;
+  padding: 0.3rem 0.75rem;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+/* Glaucoma Stage Indicator */
+.stage-indicator {
+  display: inline-block;
+  padding: 0.25rem 0.75rem;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  margin-bottom: 0.75rem;
+}
+
+.stage-indicator.stage-early {
+  background: #dcfce7;
+  color: #166534;
+  border: 1px solid #22c55e;
+}
+
+.stage-indicator.stage-normal-tension {
+  background: #dbeafe;
+  color: #1e40af;
+  border: 1px solid #3b82f6;
+}
+
+.stage-indicator.stage-advanced {
+  background: #ffedd5;
+  color: #9a3412;
+  border: 1px solid #f97316;
+}
+
+.stage-indicator.stage-end-stage {
+  background: #fee2e2;
+  color: #991b1b;
+  border: 1px solid #ef4444;
+}
+
+/* Above Cap Bar Style */
+.single-bar.above-cap {
+  background: linear-gradient(180deg, #7f1d1d 0%, #991b1b 50%, #b91c1c 100%) !important;
+  box-shadow: 0 2px 8px -2px rgba(153, 27, 27, 0.6) !important;
+  animation: pulseWarning 2s infinite;
+}
+
+@keyframes pulseWarning {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.85; }
+}
+
+/* Upper Cap Line */
+.upper-cap-line {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, 
+    transparent 0%, 
+    #ef4444 10%, 
+    #ef4444 90%, 
+    transparent 100%
+  );
+  z-index: 2;
+}
+
+.upper-cap-line::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: -8px;
+  bottom: -8px;
+  background: repeating-linear-gradient(
+    90deg,
+    transparent,
+    transparent 4px,
+    rgba(239, 68, 68, 0.15) 4px,
+    rgba(239, 68, 68, 0.15) 8px
+  );
+}
+
+.upper-cap-label {
+  position: absolute;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  background: #ef4444;
+  color: white;
+  padding: 0.15rem 0.4rem;
+  border-radius: 4px;
+  font-size: 0.65rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+/* Target Line Overridden */
+.target-line.overridden {
+  background: linear-gradient(90deg, 
+    transparent 0%, 
+    #7c3aed 10%, 
+    #7c3aed 90%, 
+    transparent 100%
+  ) !important;
+}
+
+.target-line.overridden .target-label {
+  background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%) !important;
+}
+
+/* Calculated Target Line (when overridden) */
+.calculated-target-line {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: repeating-linear-gradient(
+    90deg,
+    transparent,
+    transparent 3px,
+    #94a3b8 3px,
+    #94a3b8 6px
+  );
+  z-index: 1;
+}
+
+.calculated-label {
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  background: #94a3b8;
+  color: white;
+  padding: 0.1rem 0.3rem;
+  border-radius: 3px;
+  font-size: 0.6rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+/* Chart Legend */
+.chart-legend {
+  display: flex;
+  justify-content: center;
+  gap: 2rem;
+  margin-top: 1.5rem;
+  padding-top: 1rem;
+  border-top: 2px dashed #e2e8f0;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.85rem;
+  color: #64748b;
+}
+
+.legend-line {
+  width: 24px;
+  height: 3px;
+  border-radius: 2px;
+}
+
+.legend-line.target {
+  background: linear-gradient(90deg, #f59e0b 0%, #d97706 100%);
+}
+
+.legend-line.upper-cap {
+  background: linear-gradient(90deg, #ef4444 0%, #dc2626 100%);
+}
+
+.legend-line.calculated {
+  background: repeating-linear-gradient(
+    90deg,
+    transparent,
+    transparent 3px,
+    #94a3b8 3px,
+    #94a3b8 6px
+  );
+}
+
+/* Responsive Adjustments for Per-Eye Features */
+@media (max-width: 768px) {
+  .chart-badges {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.25rem;
+  }
+  
+  .target-badge,
+  .upper-cap-badge {
+    font-size: 0.7rem;
+    padding: 0.2rem 0.5rem;
+  }
+  
+  .stage-indicator {
+    font-size: 0.7rem;
+  }
+  
+  .chart-legend {
+    flex-direction: column;
+    align-items: center;
+    gap: 0.75rem;
+  }
+  
+  .upper-cap-label,
+  .calculated-label {
+    font-size: 0.55rem;
+    padding: 0.1rem 0.25rem;
   }
 }

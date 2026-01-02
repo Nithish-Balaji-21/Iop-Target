@@ -92,10 +92,11 @@ def get_patient_measurements(
     
     return measurements
 
-@router.get("/{patient_id}/latest", response_model=IOPMeasurementResponse)
+@router.get("/{patient_id}/latest", response_model=dict)
 def get_latest_measurement(patient_id: int, db: Session = Depends(get_db)):
     """
     Get the latest IOP measurement for a patient.
+    Includes 3-month validity check.
     """
     patient = db.query(Patient).filter(Patient.id == patient_id).first()
     if not patient:
@@ -114,7 +115,163 @@ def get_latest_measurement(patient_id: int, db: Session = Depends(get_db)):
             detail=f"No measurements found for patient {patient_id}"
         )
     
-    return latest
+    # Calculate days since measurement
+    now = datetime.utcnow()
+    days_since = (now - latest.measurement_date).days
+    is_valid = days_since <= 90  # 3 months = ~90 days
+    
+    return {
+        "id": latest.id,
+        "patient_id": latest.patient_id,
+        "iop_od": latest.iop_od,
+        "iop_os": latest.iop_os,
+        "measurement_date": latest.measurement_date.isoformat(),
+        "measured_by": latest.measured_by,
+        "device_type": latest.device_type,
+        "oct_rnfl_od": latest.oct_rnfl_od,
+        "oct_rnfl_os": latest.oct_rnfl_os,
+        "vf_md_od": latest.vf_md_od,
+        "vf_md_os": latest.vf_md_os,
+        "clinical_notes": latest.clinical_notes,
+        "pressure_status_od": latest.pressure_status_od,
+        "pressure_status_os": latest.pressure_status_os,
+        "created_at": latest.created_at.isoformat(),
+        "updated_at": latest.updated_at.isoformat(),
+        # 3-month validity check
+        "is_valid": is_valid,
+        "days_since_measurement": days_since,
+        "needs_new_measurement": not is_valid,
+        "validity_message": (
+            "Measurement is current" if is_valid 
+            else f"⚠️ Measurement is {days_since} days old. New measurement required (>90 days)."
+        )
+    }
+
+@router.get("/{patient_id}/validity-check", response_model=dict)
+def check_measurement_validity(patient_id: int, db: Session = Depends(get_db)):
+    """
+    Check if patient needs a new measurement (3-month rule).
+    Returns reminder status for the UI.
+    """
+    patient = db.query(Patient).filter(Patient.id == patient_id).first()
+    if not patient:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Patient with ID {patient_id} not found"
+        )
+    
+    latest = db.query(IOPMeasurement).filter(
+        IOPMeasurement.patient_id == patient_id
+    ).order_by(IOPMeasurement.measurement_date.desc()).first()
+    
+    if not latest:
+        return {
+            "has_measurement": False,
+            "needs_new_measurement": True,
+            "show_reminder": True,
+            "reminder_message": "⚠️ No measurements recorded. Please take initial IOP measurement.",
+            "days_since_measurement": None
+        }
+    
+    now = datetime.utcnow()
+    days_since = (now - latest.measurement_date).days
+    is_valid = days_since <= 90
+    
+    # Calculate when next measurement is due
+    days_until_due = 90 - days_since
+    
+    return {
+        "has_measurement": True,
+        "last_measurement_date": latest.measurement_date.isoformat(),
+        "days_since_measurement": days_since,
+        "is_valid": is_valid,
+        "needs_new_measurement": not is_valid,
+        "show_reminder": not is_valid,
+        "days_until_due": max(0, days_until_due),
+        "reminder_message": (
+            None if is_valid
+            else f"⚠️ Last measurement was {days_since} days ago. New measurement required for accurate assessment."
+        ),
+        "last_iop_od": latest.iop_od,
+        "last_iop_os": latest.iop_os
+    }
+
+@router.get("/{patient_id}/baseline", response_model=dict)
+def get_baseline_iop(patient_id: int, db: Session = Depends(get_db)):
+    """
+    Get the baseline (first untreated) IOP for a patient.
+    This is the patient's first recorded IOP measurement which represents
+    their untreated intraocular pressure.
+    """
+    patient = db.query(Patient).filter(Patient.id == patient_id).first()
+    if not patient:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Patient with ID {patient_id} not found"
+        )
+    
+    # First check if baseline is stored in patient record
+    if patient.baseline_iop_od is not None and patient.baseline_iop_os is not None:
+        return {
+            "patient_id": patient_id,
+            "baseline_iop_od": patient.baseline_iop_od,
+            "baseline_iop_os": patient.baseline_iop_os,
+            "source": "stored_baseline",
+            "message": "Using stored baseline (first untreated IOP)"
+        }
+    
+    # Otherwise, get the first recorded measurement
+    first_measurement = db.query(IOPMeasurement).filter(
+        IOPMeasurement.patient_id == patient_id
+    ).order_by(IOPMeasurement.measurement_date.asc()).first()
+    
+    if not first_measurement:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"No measurements found for patient {patient_id}. Cannot determine baseline IOP."
+        )
+    
+    return {
+        "patient_id": patient_id,
+        "baseline_iop_od": first_measurement.iop_od,
+        "baseline_iop_os": first_measurement.iop_os,
+        "first_measurement_date": first_measurement.measurement_date.isoformat(),
+        "source": "first_measurement",
+        "message": "Using first recorded measurement as baseline (untreated IOP)"
+    }
+
+
+@router.put("/{patient_id}/baseline", response_model=dict)
+def set_baseline_iop(
+    patient_id: int,
+    baseline_od: float,
+    baseline_os: float,
+    db: Session = Depends(get_db)
+):
+    """
+    Manually set the baseline (first untreated) IOP for a patient.
+    Use this when the patient's first untreated IOP values are known
+    but differ from the first recorded measurement.
+    """
+    patient = db.query(Patient).filter(Patient.id == patient_id).first()
+    if not patient:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Patient with ID {patient_id} not found"
+        )
+    
+    patient.baseline_iop_od = baseline_od
+    patient.baseline_iop_os = baseline_os
+    db.commit()
+    db.refresh(patient)
+    
+    return {
+        "patient_id": patient_id,
+        "baseline_iop_od": patient.baseline_iop_od,
+        "baseline_iop_os": patient.baseline_iop_os,
+        "message": "Baseline IOP updated successfully"
+    }
+
 
 @router.get("/{patient_id}/trend", response_model=dict)
 def get_pressure_trend(
@@ -124,7 +281,7 @@ def get_pressure_trend(
 ):
     """
     Get IOP trend data for chart visualization.
-    Returns dates and IOP values for both eyes.
+    Returns dates and IOP values for both eyes separately.
     """
     patient = db.query(Patient).filter(Patient.id == patient_id).first()
     if not patient:
@@ -148,7 +305,7 @@ def get_pressure_trend(
         iop_od_values.append(m.iop_od)
         iop_os_values.append(m.iop_os)
     
-    # Get target for reference
+    # Get target for reference (now with per-eye data)
     target = db.query(TargetPressure).filter(
         TargetPressure.patient_id == patient_id,
         TargetPressure.is_current == "YES"
@@ -160,5 +317,14 @@ def get_pressure_trend(
         "iop_os": iop_os_values,
         "target_od": target.target_iop_od if target else None,
         "target_os": target.target_iop_os if target else None,
+        # Additional target data for enhanced charts
+        "calculated_target_od": target.calculated_target_od if target else None,
+        "calculated_target_os": target.calculated_target_os if target else None,
+        "upper_cap_od": target.upper_cap_od if target else None,
+        "upper_cap_os": target.upper_cap_os if target else None,
+        "is_overridden_od": target.is_overridden_od if target else None,
+        "is_overridden_os": target.is_overridden_os if target else None,
+        "glaucoma_stage_od": target.glaucoma_stage_od if target else None,
+        "glaucoma_stage_os": target.glaucoma_stage_os if target else None,
         "total_measurements": len(measurements)
     }

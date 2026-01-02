@@ -82,46 +82,105 @@ def assess_patient_risk(
             detail=f"No measurements available for patient {patient_id}"
         )
     
-    latest = measurements[0]
+    # Find latest measurement with IOP values (skip measurements without IOP data)
+    latest = None
+    for m in measurements:
+        if m.iop_od is not None or m.iop_os is not None:
+            latest = m
+            break
+    
+    if not latest:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"No measurements with IOP values for patient {patient_id}"
+        )
     
     # ===== EVALUATE IOP CONTROL =====
     iop_status_od = RiskEngine.WITHIN_TARGET
     iop_severity_od = 0
-    if latest.iop_od:
+    if latest.iop_od and target.target_iop_od:
         iop_status_od, iop_severity_od = RiskEngine.evaluate_iop_status(
             latest.iop_od, target.target_iop_od
         )
     
     iop_status_os = RiskEngine.WITHIN_TARGET
     iop_severity_os = 0
-    if latest.iop_os:
+    if latest.iop_os and target.target_iop_os:
         iop_status_os, iop_severity_os = RiskEngine.evaluate_iop_status(
             latest.iop_os, target.target_iop_os
         )
     
-    # Take worst of both eyes for composite score
-    iop_status = iop_status_od if iop_severity_od >= iop_severity_os else iop_status_os
+    # Combine both eyes - use worst status
+    # If either eye is above target, report as ABOVE_TARGET
+    # Else if either eye is below target, report as BELOW_TARGET
+    # Else both are within target
+    if iop_status_od == RiskEngine.ABOVE_TARGET or iop_status_os == RiskEngine.ABOVE_TARGET:
+        iop_status = RiskEngine.ABOVE_TARGET
+    elif iop_status_od == RiskEngine.BELOW_TARGET or iop_status_os == RiskEngine.BELOW_TARGET:
+        iop_status = RiskEngine.BELOW_TARGET
+    else:
+        iop_status = RiskEngine.WITHIN_TARGET
+    
+    # Severity is the worst between the two eyes
     iop_severity = max(iop_severity_od, iop_severity_os)
     
-    # ===== EVALUATE RNFL PROGRESSION =====
-    rnfl_status = "BASELINE"
-    rnfl_severity = 0
+    # ===== EVALUATE RNFL PROGRESSION (BOTH EYES) =====
+    rnfl_status_od = "BASELINE"
+    rnfl_severity_od = 0
+    rnfl_status_os = "BASELINE"
+    rnfl_severity_os = 0
+    
     if latest.oct_rnfl_od and len(measurements) > 1:
-        rnfl_history = [m.oct_rnfl_od for m in measurements if m.oct_rnfl_od]
-        if len(rnfl_history) > 1:
-            rnfl_status, rnfl_severity = RiskEngine.assess_rnfl_progression(
-                latest.oct_rnfl_od, rnfl_history[1:], months_between_visits=6
+        rnfl_history_od = [m.oct_rnfl_od for m in measurements if m.oct_rnfl_od]
+        if len(rnfl_history_od) > 1:
+            rnfl_status_od, rnfl_severity_od = RiskEngine.assess_rnfl_progression(
+                latest.oct_rnfl_od, rnfl_history_od[1:], months_between_visits=6
             )
     
-    # ===== EVALUATE VF PROGRESSION =====
-    vf_status = "BASELINE"
-    vf_severity = 0
-    if latest.vf_md_od and len(measurements) > 1:
-        vf_history = [m.vf_md_od for m in measurements if m.vf_md_od]
-        if len(vf_history) > 1:
-            vf_status, vf_severity = RiskEngine.assess_vf_progression(
-                latest.vf_md_od, vf_history[1:], months_between_visits=6
+    if latest.oct_rnfl_os and len(measurements) > 1:
+        rnfl_history_os = [m.oct_rnfl_os for m in measurements if m.oct_rnfl_os]
+        if len(rnfl_history_os) > 1:
+            rnfl_status_os, rnfl_severity_os = RiskEngine.assess_rnfl_progression(
+                latest.oct_rnfl_os, rnfl_history_os[1:], months_between_visits=6
             )
+    
+    # Use worst RNFL status between both eyes
+    if rnfl_status_od == "PROGRESSIVE" or rnfl_status_os == "PROGRESSIVE":
+        rnfl_status = "PROGRESSIVE"
+    elif rnfl_status_od == "MARGINAL" or rnfl_status_os == "MARGINAL":
+        rnfl_status = "MARGINAL"
+    else:
+        rnfl_status = "STABLE" if (rnfl_status_od == "STABLE" or rnfl_status_os == "STABLE") else "BASELINE"
+    rnfl_severity = max(rnfl_severity_od, rnfl_severity_os)
+
+    # ===== EVALUATE VF PROGRESSION (BOTH EYES) =====
+    vf_status_od = "BASELINE"
+    vf_severity_od = 0
+    vf_status_os = "BASELINE"
+    vf_severity_os = 0
+    
+    if latest.vf_md_od and len(measurements) > 1:
+        vf_history_od = [m.vf_md_od for m in measurements if m.vf_md_od]
+        if len(vf_history_od) > 1:
+            vf_status_od, vf_severity_od = RiskEngine.assess_vf_progression(
+                latest.vf_md_od, vf_history_od[1:], months_between_visits=6
+            )
+    
+    if latest.vf_md_os and len(measurements) > 1:
+        vf_history_os = [m.vf_md_os for m in measurements if m.vf_md_os]
+        if len(vf_history_os) > 1:
+            vf_status_os, vf_severity_os = RiskEngine.assess_vf_progression(
+                latest.vf_md_os, vf_history_os[1:], months_between_visits=6
+            )
+    
+    # Use worst VF status between both eyes
+    if vf_status_od == "PROGRESSIVE" or vf_status_os == "PROGRESSIVE":
+        vf_status = "PROGRESSIVE"
+    elif vf_status_od == "MARGINAL" or vf_status_os == "MARGINAL":
+        vf_status = "MARGINAL"
+    else:
+        vf_status = "STABLE" if (vf_status_od == "STABLE" or vf_status_os == "STABLE") else "BASELINE"
+    vf_severity = max(vf_severity_od, vf_severity_os)
     
     # ===== CALCULATE PRESSURE FLUCTUATION =====
     pressure_fluctuation = calculate_pressure_fluctuation(measurements[:6])
@@ -148,6 +207,7 @@ def assess_patient_risk(
         patient_id=patient_id,
         risk_level=risk_level,
         risk_score=risk_score,
+        current_iop_status=iop_status,
         reasons=reasons,
         recommended_followup_days=followup_days,
         recommended_actions=followup_actions

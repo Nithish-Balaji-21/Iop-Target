@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import '../styles/Dashboard.css';
+import '../styles/RiskAssessmentPanel.css';
 
 /**
  * Risk Assessment Display Component
@@ -89,21 +89,48 @@ export const RiskAssessmentPanel = ({ patientId }) => {
   }
 
   if (error) {
+    // Check if error is about missing prerequisites
+    const isMissingPrereqs = error.includes('target') || error.includes('measurement') || error.includes('400');
+    
     return (
-      <div className="card risk-panel error">
+      <div className="card risk-panel prerequisites-needed">
         <h3>📊 Risk Assessment</h3>
-        <div className="error-message">
-          <p>❌ {error}</p>
-          <p className="hint">
-            Next steps:
-            <br />
-            1. Use "Jampel Target IOP Calculator" to set a target
-            <br />
-            2. Record at least one IOP measurement
-            <br />
-            3. Then risk assessment will be available
-          </p>
-        </div>
+        
+        {isMissingPrereqs ? (
+          <div className="prerequisites-box">
+            <div className="prereq-icon">📋</div>
+            <h4>Prerequisites Required</h4>
+            <p>To calculate risk assessment, please complete the following:</p>
+            
+            <div className="prereq-checklist">
+              <div className="prereq-item">
+                <span className="prereq-number">1</span>
+                <div className="prereq-content">
+                  <strong>Set Target IOP</strong>
+                  <p>Go to "Target IOP" tab and calculate individualized target using TRBS assessment</p>
+                </div>
+              </div>
+              <div className="prereq-item">
+                <span className="prereq-number">2</span>
+                <div className="prereq-content">
+                  <strong>Record Measurement</strong>
+                  <p>Go to "Measurements" tab and add at least one IOP measurement</p>
+                </div>
+              </div>
+            </div>
+            
+            <button onClick={fetchRiskAssessment} className="btn btn-primary retry-btn">
+              🔄 Check Again
+            </button>
+          </div>
+        ) : (
+          <div className="error-message">
+            <p>❌ {error}</p>
+            <button onClick={fetchRiskAssessment} className="btn btn-secondary retry-btn">
+              🔄 Retry
+            </button>
+          </div>
+        )}
       </div>
     );
   }
@@ -114,74 +141,81 @@ export const RiskAssessmentPanel = ({ patientId }) => {
 
   return (
     <div className={`card risk-panel ${getRiskColor(riskData.risk_level)}`}>
-      <h3>📊 Risk Assessment</h3>
+      <h3 style={{ marginBottom: '2rem' }}>📊 Risk Assessment</h3>
 
-      {/* Main Risk Display */}
-      <div className="risk-main-display">
-        <div className={`risk-badge-large ${getRiskColor(riskData.risk_level)}`}>
-          <div className="risk-icon">{getRiskIcon(riskData.risk_level)}</div>
-          <div className="risk-info">
-            <div className="risk-level">{riskData.risk_level || 'UNKNOWN'}</div>
-            <div className="risk-score">Score: {riskData.risk_score}/100</div>
+      {/* Main Assessment Grid - 4 Columns */}
+      <div className="horizontal-grid">
+        {/* Risk Level */}
+        <div className={`grid-item ${riskData.risk_level?.toLowerCase() === 'low' ? 'success' : riskData.risk_level?.toLowerCase() === 'moderate' ? 'warning' : 'danger'}`}>
+          <div className="grid-item-label">Risk Level</div>
+          <div className="grid-item-value">{getRiskIcon(riskData.risk_level)} {riskData.risk_level || 'UNKNOWN'}</div>
+          <div className="grid-item-unit">Patient Risk</div>
+        </div>
+
+        {/* Risk Score */}
+        <div className="grid-item info">
+          <div className="grid-item-label">Risk Score</div>
+          <div className="grid-item-value">{riskData.risk_score}/100</div>
+          <div className="grid-item-unit">Overall Assessment</div>
+        </div>
+
+        {/* IOP Control Status */}
+        <div className={`grid-item ${riskData.current_iop_status === 'WITHIN_TARGET' ? 'success' : riskData.current_iop_status === 'ABOVE_TARGET' ? 'danger' : 'warning'}`}>
+          <div className="grid-item-label">IOP Control</div>
+          <div className="grid-item-value">
+            {riskData.current_iop_status === 'WITHIN_TARGET' && '✓'}
+            {riskData.current_iop_status === 'ABOVE_TARGET' && '✕'}
+            {riskData.current_iop_status === 'BELOW_TARGET' && '⚠'}
+          </div>
+          <div className="grid-item-unit">
+            {riskData.current_iop_status === 'WITHIN_TARGET' && 'Within Target'}
+            {riskData.current_iop_status === 'ABOVE_TARGET' && 'Above Target'}
+            {riskData.current_iop_status === 'BELOW_TARGET' && 'Below Target'}
           </div>
         </div>
-      </div>
 
-      {/* IOP Status */}
-      <div className="risk-section">
-        <h4>💉 IOP Control Status</h4>
-        <div className={`status-box status-${riskData.current_iop_status?.toLowerCase()}`}>
-          <span className="status-label">
-            {riskData.current_iop_status === 'WITHIN_TARGET' ? '✓ Within Target' : '✕ Above Target'}
-          </span>
+        {/* Follow-up */}
+        <div className="grid-item info">
+          <div className="grid-item-label">Next Follow-up</div>
+          <div className="grid-item-value">{riskData.recommended_followup_days}</div>
+          <div className="grid-item-unit">days</div>
         </div>
       </div>
 
       {/* Risk Factors */}
-      <div className="risk-section">
-        <h4>⚠️ Risk Factors</h4>
-        <ul className="risk-reasons">
-          {riskData.reasons && riskData.reasons.length > 0 ? (
-            riskData.reasons.map((reason, idx) => (
+      {riskData.reasons && riskData.reasons.length > 0 && (
+        <div className="risk-section" style={{ marginTop: '2rem' }}>
+          <h4>⚠️ Risk Factors</h4>
+          <ul className="risk-reasons">
+            {riskData.reasons.map((reason, idx) => (
               <li key={idx}>• {reason}</li>
-            ))
-          ) : (
-            <li>• Stable glaucoma control</li>
-          )}
-        </ul>
-      </div>
-
-      {/* Recommended Follow-up */}
-      <div className="risk-section">
-        <h4>📅 Recommended Follow-up</h4>
-        <div className="followup-info">
-          <div className="followup-days">
-            <span className="label">Next Visit In:</span>
-            <span className="value">{riskData.recommended_followup_days} days</span>
-          </div>
-          {riskData.recommended_actions && (
-            <div className="followup-actions">
-              <span className="label">Recommended Actions:</span>
-              <ul>
-                {riskData.recommended_actions.map((action, idx) => (
-                  <li key={idx}>• {action}</li>
-                ))}
-              </ul>
-            </div>
-          )}
+            ))}
+          </ul>
         </div>
-      </div>
+      )}
+
+      {/* Recommended Actions */}
+      {riskData.recommended_actions && riskData.recommended_actions.length > 0 && (
+        <div className="risk-section">
+          <h4>📋 Recommended Actions</h4>
+          <ul className="risk-reasons">
+            {riskData.recommended_actions.map((action, idx) => (
+              <li key={idx}>• {action}</li>
+            ))}
+          </ul>
+        </div>
+      )}
 
       {/* Clinical Interpretation */}
       {riskData.clinical_interpretation && (
         <div className="risk-section">
           <h4>📝 Clinical Notes</h4>
-          <p className="clinical-text">{riskData.clinical_interpretation}</p>
+          <p className="clinical-text" style={{ marginBottom: 0 }}>{riskData.clinical_interpretation}</p>
         </div>
       )}
 
       {/* Refresh Button */}
-      <button onClick={fetchRiskAssessment} className="btn btn-secondary btn-small">
+      <button onClick={fetchRiskAssessment} className="btn btn-secondary btn-small" style={{ marginTop: '2rem' }}>
         🔄 Refresh Assessment
       </button>
     </div>

@@ -1,5 +1,5 @@
 import React from 'react';
-import '../styles/Dashboard.css';
+import '../styles/Common.css';
 
 /**
  * Risk Badge Component - Shows risk level with color coding

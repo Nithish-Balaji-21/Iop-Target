@@ -1,0 +1,201 @@
+/* Measurements Table Styles */
+.measurements-table-container {
+  background: white;
+  border-radius: 16px;
+  padding: 1.5rem;
+  margin-bottom: 2rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  border: 1px solid #e2e8f0;
+}
+
+.measurements-table-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+  padding-bottom: 1rem;
+  border-bottom: 2px solid #f1f5f9;
+}
+
+.measurements-table-header h3 {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.measurement-count {
+  color: #64748b;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.table-wrapper {
+  overflow-x: auto;
+}
+
+.measurements-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.95rem;
+}
+
+.measurements-table thead {
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+  border-bottom: 2px solid #e2e8f0;
+}
+
+.measurements-table th {
+  padding: 1rem;
+  text-align: left;
+  font-weight: 700;
+  color: #334155;
+  text-transform: uppercase;
+  font-size: 0.85rem;
+  letter-spacing: 0.05em;
+  white-space: nowrap;
+}
+
+.measurements-table td {
+  padding: 1rem;
+  border-bottom: 1px solid #f1f5f9;
+  vertical-align: middle;
+}
+
+.measurements-table tbody tr {
+  transition: background-color 0.2s;
+}
+
+.measurements-table tbody tr:hover {
+  background-color: #f8fafc;
+}
+
+.measurements-table tbody tr.outdated-row {
+  background-color: #fef2f2;
+  border-left: 4px solid #ef4444;
+}
+
+.measurements-table tbody tr.outdated-row:hover {
+  background-color: #fee2e2;
+}
+
+.date-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.date-value {
+  font-weight: 600;
+  color: #0f172a;
+}
+
+.days-ago {
+  font-size: 0.8rem;
+  color: #64748b;
+}
+
+.days-ago.outdated {
+  color: #dc2626;
+  font-weight: 600;
+}
+
+.outdated-badge {
+  display: inline-block;
+  margin-left: 0.5rem;
+  padding: 0.15rem 0.5rem;
+  background: #fee2e2;
+  color: #991b1b;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.iop-value {
+  font-weight: 700;
+  color: #0f172a;
+  font-size: 1rem;
+}
+
+.no-data {
+  color: #94a3b8;
+  font-style: italic;
+}
+
+.status-badge {
+  display: inline-block;
+  padding: 0.4rem 0.75rem;
+  border-radius: 12px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.status-badge.above {
+  background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
+  color: #991b1b;
+  border: 1px solid #fca5a5;
+}
+
+.status-badge.within {
+  background: linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%);
+  color: #166534;
+  border: 1px solid #86efac;
+}
+
+.status-badge.below {
+  background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+  color: #1e40af;
+  border: 1px solid #93c5fd;
+}
+
+.device-type {
+  color: #64748b;
+  font-size: 0.9rem;
+}
+
+.notes-text {
+  color: #475569;
+  font-size: 0.9rem;
+  max-width: 200px;
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.measurements-table-loading,
+.measurements-table-error,
+.measurements-table-empty {
+  padding: 2rem;
+  text-align: center;
+  color: #64748b;
+}
+
+.measurements-table-error {
+  color: #dc2626;
+}
+
+.measurements-table-empty .empty-subtitle {
+  font-size: 0.9rem;
+  color: #94a3b8;
+  margin-top: 0.5rem;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .measurements-table {
+    font-size: 0.85rem;
+  }
+  
+  .measurements-table th,
+  .measurements-table td {
+    padding: 0.75rem 0.5rem;
+  }
+  
+  .col-notes {
+    display: none;
+  }
+}
+

@@ -188,7 +188,23 @@ export default function History({ patientId, onDataChange }) {
             const result = await response.json();
 
             if (result.exists && result.data) {
+                // Load all previous data for follow-up visits
                 setConditions(result.data.conditions || []);
+                if (result.data.systemicToggles) {
+                    setSystemicToggles(result.data.systemicToggles);
+                }
+                if (result.data.ocularHistory) {
+                    setOcularHistory(result.data.ocularHistory);
+                }
+                if (result.data.remarks) {
+                    setRemarks(result.data.remarks);
+                }
+                if (result.data.otherConditions) {
+                    setOtherConditions(result.data.otherConditions);
+                }
+                if (result.data.agmHistory) {
+                    setAgmHistory(result.data.agmHistory);
+                }
                 setIsSaved(true);
                 setIsEditing(false);
                 setSavedAt(result.updated_at || result.created_at);
@@ -301,7 +317,8 @@ export default function History({ patientId, onDataChange }) {
                         ocularHistory,
                         remarks,
                         otherConditions,
-                        riskFactors
+                        riskFactors,
+                        agmHistory
                     },
                     created_by: 'Dr. User'
                 })

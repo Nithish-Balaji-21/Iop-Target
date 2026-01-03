@@ -18,7 +18,8 @@ class Settings:
     API_HOST = os.getenv("API_HOST", "0.0.0.0")
     DEBUG = os.getenv("DEBUG", "True") == "True"
     
-    # CORS
-    ALLOWED_ORIGINS = ["http://localhost:5173", "http://localhost:3000", "*"]
+    # CORS - configurable via environment variable
+    _cors_origins = os.getenv("ALLOWED_ORIGINS", "http://localhost:5173,http://localhost:5174,http://localhost:3000")
+    ALLOWED_ORIGINS = [origin.strip() for origin in _cors_origins.split(",")] if _cors_origins else ["http://localhost:5173"]
 
 settings = Settings()

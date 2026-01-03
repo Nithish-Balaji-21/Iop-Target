@@ -205,6 +205,76 @@
     font-size: 0.9rem;
 }
 
+/* DOPP Warning Banner */
+.dopp-warning-banner {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  padding: 1rem;
+  border-radius: 8px;
+  margin-bottom: 1rem;
+  border-left: 4px solid;
+  background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); /* Default to warning */
+  border-color: #f59e0b;
+}
+
+.dopp-warning-banner.info {
+  background: linear-gradient(135deg, #e0f2fe 0%, #bfdbfe 100%);
+  border-color: #3b82f6;
+}
+
+.dopp-warning-banner .warning-icon {
+  font-size: 1.8rem;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.dopp-warning-banner .dopp-warning-content {
+  flex-grow: 1;
+}
+
+.dopp-warning-banner strong {
+  display: block;
+  font-size: 1.1rem;
+  color: #92400e; /* Warning color */
+  margin-bottom: 0.5rem;
+}
+
+.dopp-warning-banner.info strong {
+  color: #1e40af; /* Info color */
+}
+
+.dopp-warning-banner .dopp-details {
+  font-size: 0.95rem;
+  color: #78350f; /* Warning color */
+  line-height: 1.5;
+}
+
+.dopp-warning-banner.info .dopp-details {
+  color: #3b82f6; /* Info color */
+}
+
+.dopp-warning-banner .dopp-details span {
+  font-weight: 600;
+}
+
+.dopp-warning-banner .dopp-details span.low-perfusion {
+  color: #dc2626; /* Red for low perfusion */
+  font-weight: 700;
+}
+
+.dopp-warning-banner small {
+  display: block;
+  margin-top: 0.75rem;
+  font-size: 0.8rem;
+  color: #a16207; /* Warning color */
+  font-style: italic;
+}
+
+.dopp-warning-banner.info small {
+  color: #1c51b9; /* Info color */
+}
+
 .warning-banner svg {
     flex-shrink: 0;
 }

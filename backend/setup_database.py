@@ -1,91 +1,82 @@
 #!/usr/bin/env python
 """
-Database setup script - Creates glaucoma_db and tables
+Database setup script - Creates glaucoma_db and tables using SQLAlchemy
 Run: python setup_database.py
 """
-import pymysql
+import os
 import sys
 
-# MySQL connection details
-HOST = "localhost"
-USER = "root"
-PASSWORD = "Nithish@21"
-DB_NAME = "glaucoma_db"
+# Try to load environment variables (optional)
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except ImportError:
+    print("⚠️  python-dotenv not installed. Using default values or environment variables.")
+    print("   Install with: pip install python-dotenv")
+
+# MySQL connection details from environment or defaults
+HOST = os.getenv("DB_HOST", "localhost")
+USER = os.getenv("DB_USER", "root")
+PASSWORD = os.getenv("DB_PASSWORD", "")
+DB_NAME = os.getenv("DB_NAME", "glaucoma_db")
+DB_PORT = int(os.getenv("DB_PORT", "3306"))
 
 def setup_database():
-    """Create database and tables"""
+    """Create database and tables using SQLAlchemy"""
     try:
-        # Connect without database first
+        import pymysql
+        from sqlalchemy import create_engine, text
+        
+        # Step 1: Connect to MySQL (without database) to create database
         print("🔌 Connecting to MySQL...")
-        conn = pymysql.connect(
+        mysql_conn = pymysql.connect(
             host=HOST,
             user=USER,
             password=PASSWORD,
-            port=3306
+            port=DB_PORT
         )
-        cursor = conn.cursor()
+        cursor = mysql_conn.cursor()
         print("✓ Connected to MySQL")
         
-        # Create database
+        # Create database if it doesn't exist
         print(f"📁 Creating database '{DB_NAME}'...")
-        cursor.execute(f"CREATE DATABASE IF NOT EXISTS {DB_NAME}")
+        cursor.execute(f"CREATE DATABASE IF NOT EXISTS {DB_NAME} CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci")
         print(f"✓ Database created/exists")
         
-        # Use database
-        cursor.execute(f"USE {DB_NAME}")
-        print(f"✓ Using database '{DB_NAME}'")
-        
-        # Read and execute schema file
-        print("📊 Creating tables from schema...")
-        with open('database_schema.sql', 'r') as f:
-            schema = f.read()
-            
-        # Split by ';' and execute statements
-        statements = [s.strip() for s in schema.split(';') if s.strip()]
-        
-        # Skip comments and empty lines
-        statements = [
-            s for s in statements 
-            if not s.startswith('--') and s.strip()
-        ]
-        
-        # Execute first few statements (database creation, table creation)
-        executed = 0
-        for i, statement in enumerate(statements):
-            if statement.startswith('USE') or statement.startswith('CREATE'):
-                try:
-                    cursor.execute(statement)
-                    executed += 1
-                    print(f"  ✓ Executed statement {i+1}")
-                except Exception as e:
-                    if 'already exists' in str(e).lower():
-                        print(f"  ℹ️  Table already exists (skipping)")
-                    else:
-                        print(f"  ⚠️  {e}")
-        
-        conn.commit()
-        print(f"\n✅ Database setup complete! ({executed} statements executed)")
-        
-        # Verify
-        cursor.execute("SHOW TABLES;")
-        tables = cursor.fetchall()
-        print(f"\n📋 Tables in database:")
-        for table in tables:
-            print(f"   - {table[0]}")
-        
         cursor.close()
-        conn.close()
+        mysql_conn.close()
+        
+        # Step 2: Use SQLAlchemy to create tables
+        print("📊 Creating tables from SQLAlchemy models...")
+        from app.database import Base, engine
+        from app.models import Patient, IOPMeasurement, TargetPressure, Visit, EMRRecord, GlaucomaRiskData
+        
+        # Create all tables
+        Base.metadata.create_all(bind=engine)
+        print("✓ Tables created successfully")
+        
+        # Verify tables
+        print("\n📋 Verifying tables...")
+        with engine.connect() as conn:
+            result = conn.execute(text("SHOW TABLES"))
+            tables = [row[0] for row in result]
+            
+        print(f"\n✅ Database setup complete!")
+        print(f"\n📋 Tables in database ({len(tables)}):")
+        for table in tables:
+            print(f"   - {table}")
+        
         return True
         
-    except pymysql.Error as e:
-        print(f"\n❌ MySQL Error: {e}")
-        return False
-    except FileNotFoundError:
-        print(f"\n❌ Error: database_schema.sql not found in current directory")
-        print(f"   Make sure you're running from: E:\\Hackathon\\backend")
+    except ImportError as e:
+        print(f"\n❌ Import Error: {e}")
+        print("   Make sure you're running from the backend directory and dependencies are installed:")
+        print("   pip install -r requirements.txt")
         return False
     except Exception as e:
         print(f"\n❌ Error: {e}")
+        import traceback
+        traceback.print_exc()
         return False
 
 if __name__ == "__main__":

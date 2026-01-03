@@ -35,7 +35,8 @@ export default function PatientQueue({ doctorName, onPatientSelect, onLogout }) 
         patient_id: '',
         age: '',
         gender: 'Male',
-        glaucoma_type: 'POAG'
+        glaucoma_type: 'POAG',
+        visit_date: ''
     });
     const [addError, setAddError] = useState('');
 
@@ -57,23 +58,40 @@ export default function PatientQueue({ doctorName, onPatientSelect, onLogout }) 
             const response = await fetch('http://localhost:8000/api/patients/');
             if (response.ok) {
                 const data = await response.json();
-                // Map backend data to display format
-                const mappedPatients = data.map(p => ({
-                    id: p.id,
-                    name: p.name,
-                    mrNumber: p.patient_id,
-                    age: p.age,
-                    gender: p.gender || 'Male',
-                    visitType: 'R', // Review
-                    purpose: p.glaucoma_type || 'Glaucoma Follow-up',
-                    assignedTo: doctorName,
-                    lastVisitDate: p.created_at ? new Date(p.created_at).toLocaleDateString() : '---',
-                    lastClinic: 'GLAUCOMA',
-                    lastTreatment: '',
-                    checkInTimestamp: p.created_at ? new Date(p.created_at).getTime() : Date.now(),
-                    status: 'Waiting'
+                // For each patient, fetch the latest visit (if any) to display visit date in queue
+                const mapped = await Promise.all(data.map(async (p) => {
+                    let lastVisitDate = null;
+                    let checkInTimestamp = p.created_at ? new Date(p.created_at).getTime() : Date.now();
+                    try {
+                        const vResp = await fetch(`http://localhost:8000/api/risk/${p.id}/visits?limit=1`);
+                        if (vResp.ok) {
+                            const visits = await vResp.json();
+                            if (Array.isArray(visits) && visits.length > 0) {
+                                lastVisitDate = visits[0].visit_date;
+                                checkInTimestamp = new Date(visits[0].visit_date).getTime();
+                            }
+                        }
+                    } catch (err) {
+                        console.error('Error fetching visits for patient', p.id, err);
+                    }
+
+                    return {
+                        id: p.id,
+                        name: p.name,
+                        mrNumber: p.patient_id,
+                        age: p.age,
+                        gender: p.gender || 'Male',
+                        visitType: 'R', // Review
+                        purpose: p.glaucoma_type || 'Glaucoma Follow-up',
+                        assignedTo: doctorName,
+                        lastVisitDate: lastVisitDate ? new Date(lastVisitDate).toLocaleDateString() : (p.created_at ? new Date(p.created_at).toLocaleDateString() : '---'),
+                        lastClinic: 'GLAUCOMA',
+                        lastTreatment: '',
+                        checkInTimestamp: checkInTimestamp,
+                        status: 'Waiting'
+                    };
                 }));
-                setPatients(mappedPatients);
+                setPatients(mapped);
             }
         } catch (err) {
             console.error('Error fetching patients:', err);
@@ -121,24 +139,56 @@ export default function PatientQueue({ doctorName, onPatientSelect, onLogout }) 
         }
 
         try {
-            const response = await fetch('http://localhost:8000/api/patients/', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    ...newPatient,
-                    age: parseInt(newPatient.age)
-                })
-            });
+                const response = await fetch('http://localhost:8000/api/patients/', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        ...newPatient,
+                        age: parseInt(newPatient.age)
+                    })
+                });
 
-            if (response.ok) {
-                setShowAddModal(false);
-                setNewPatient({ name: '', patient_id: '', age: '', gender: 'Male', glaucoma_type: 'POAG' });
-                setAddError('');
-                fetchPatients(); // Refresh list
-            } else {
-                const errData = await response.json();
-                setAddError(errData.detail || 'Failed to add patient');
-            }
+                if (response.ok) {
+                    const created = await response.json();
+
+                    // If a visit_date was provided while adding the patient, create a Visit record too
+                    if (newPatient.visit_date && newPatient.visit_date.trim() !== '') {
+                        try {
+                            // Normalize date string to ISO datetime expected by backend
+                            let visitDateIso = newPatient.visit_date;
+                            // If only a date (YYYY-MM-DD) supplied, append midnight time
+                            if (!visitDateIso.includes('T')) visitDateIso = visitDateIso + 'T00:00:00';
+                            // Ensure seconds present
+                            if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(visitDateIso)) visitDateIso = visitDateIso + ':00';
+
+                            const visitPayload = {
+                                patient_id: created.id,
+                                visit_date: visitDateIso,
+                                visit_type: 'ROUTINE',
+                                findings: null,
+                                treatment_changes: null,
+                                doctor_notes: null,
+                                created_by: 'FrontDesk'
+                            };
+
+                            await fetch(`http://localhost:8000/api/risk/${created.id}/visit`, {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify(visitPayload)
+                            });
+                        } catch (err) {
+                            console.error('Error creating initial visit for patient:', err);
+                        }
+                    }
+
+                    setShowAddModal(false);
+                    setNewPatient({ name: '', patient_id: '', age: '', gender: 'Male', glaucoma_type: 'POAG', visit_date: '' });
+                    setAddError('');
+                    fetchPatients(); // Refresh list
+                } else {
+                    const errData = await response.json();
+                    setAddError(errData.detail || 'Failed to add patient');
+                }
         } catch (err) {
             setAddError('Error connecting to server');
         }
@@ -197,7 +247,7 @@ export default function PatientQueue({ doctorName, onPatientSelect, onLogout }) 
             {/* Top Blue Header */}
             <div className="queue-header">
                 <div className="header-left">
-                    <span className="header-brand">eyeNotes</span>
+                    <span className="header-brand">i-Target</span>
                     <div className="op-toggle">
                         <span className="op-label">OP</span>
                     </div>
@@ -435,6 +485,16 @@ export default function PatientQueue({ doctorName, onPatientSelect, onLogout }) 
                                     <option value="JG">JG - Juvenile Glaucoma</option>
                                     <option value="OHT">OHT - Ocular Hypertension</option>
                                 </select>
+                            </div>
+                            <div className="add-form-group">
+                                <label>Date of Visit *</label>
+                                <input
+                                    type="date"
+                                    value={newPatient.visit_date}
+                                    onChange={(e) => setNewPatient({ ...newPatient, visit_date: e.target.value })}
+                                    className="add-form-input"
+                                    required
+                                />
                             </div>
                             {addError && (
                                 <div className="error-message">

@@ -56,11 +56,52 @@ export default function Refraction({ patientId, onDataChange }) {
             });
 
             if (response.ok) {
+                // Helper function to convert SPH to myopia category
+                const sphToMyopia = (sphStr) => {
+                    if (!sphStr || sphStr === '') return null;
+                    try {
+                        const sphClean = String(sphStr).trim().replace('+', '').replace('DS', '').replace('D', '').trim();
+                        const sphValue = parseFloat(sphClean);
+                        if (isNaN(sphValue)) return null;
+                        
+                        if (sphValue >= 0 || sphValue > -1) return 'none';
+                        else if (sphValue >= -3) return 'low_myopia';
+                        else return 'mod_high_myopia';
+                    } catch {
+                        return null;
+                    }
+                };
+
+                // Extract SPH values and update risk factors
+                const distance = prescription.distance || {};
+                const odSph = distance.od?.sph || '';
+                const osSph = distance.os?.sph || '';
+                
+                const myopiaOD = sphToMyopia(odSph);
+                const myopiaOS = sphToMyopia(osSph);
+
+                // Update risk factors with myopia data
+                if (myopiaOD || myopiaOS) {
+                    try {
+                        const riskFactorsBody = {};
+                        if (myopiaOD) riskFactorsBody.myopia_od = myopiaOD;
+                        if (myopiaOS) riskFactorsBody.myopia_os = myopiaOS;
+                        
+                        await fetch(`${API_BASE}/api/emr/${patientId}/risk-factors`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(riskFactorsBody)
+                        });
+                    } catch (err) {
+                        console.error('Error updating risk factors:', err);
+                    }
+                }
+
                 setIsSaved(true);
                 if (onDataChange) {
                     onDataChange('refraction', { prescription });
                 }
-                alert('Refraction saved successfully!');
+                alert('✓ Refraction saved! Myopia data will auto-populate in Target IOP Calculator.');
             }
         } catch (error) {
             console.error('Error saving refraction data:', error);

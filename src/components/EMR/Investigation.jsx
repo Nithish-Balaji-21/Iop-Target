@@ -79,7 +79,14 @@ export default function Investigation({ patientId, onDataChange }) {
                 if (onDataChange) {
                     onDataChange('investigation', { investigations, dilation });
                 }
-                alert('Investigation saved successfully!');
+                
+                // Check if IOP was saved - if so, graph will auto-update
+                const hasIOP = investigations.iop.re || investigations.iop.le;
+                if (hasIOP) {
+                    alert('✓ Investigation saved! IOP measurement has been recorded and will appear in the graph.');
+                } else {
+                    alert('Investigation saved successfully!');
+                }
             }
         } catch (error) {
             console.error('Error saving investigation data:', error);

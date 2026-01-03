@@ -55,35 +55,11 @@ export default function Login({ onLogin }) {
 
             <div className="login-content">
                 <div className="login-card">
-                    {/* Left Panel: Pearls */}
-                    <div className="pearls-section">
-                        <div className="pearls-header">
-                            Ophthalmology pearls #43
-                        </div>
-                        <div className="pearls-content">
-                            <div className="pearl-title">Punctate Staining Patterns of the Ocular Surface</div>
-                            <div style={{ fontSize: '0.9rem', color: '#555' }}>
-                                <p><strong>Pattern:</strong> Diffuse</p>
-                                <p><strong>Example:</strong> Viral conjunctivitis, Toxicity</p>
-                                <br />
-                                <p><strong>Pattern:</strong> Inferior</p>
-                                <p><strong>Example:</strong> Blepharoconjunctivitis, Lagophthalmos</p>
-                                <br />
-                                <p><strong>Pattern:</strong> Interpalpebral</p>
-                                <p><strong>Example:</strong> Dry eye disease, Exposure</p>
-
-                                <div style={{ marginTop: '20px', padding: '10px', background: '#eef', borderRadius: '4px' }}>
-                                    <em>Reference: BCSC 2022-23 External Disease and Cornea</em>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Right Panel: Login Form */}
+                    {/* Login Form */}
                     <div className="login-form-section">
                         <div className="app-logo">
                             <EyeLogo size={56} />
-                            <span className="logo-text">eyeNotes</span>
+                            <span className="logo-text">i-Target</span>
                         </div>
 
                         <form onSubmit={handleLogin} style={{ width: '100%' }}>

@@ -54,11 +54,13 @@ class GlaucomaRiskData(Base):
     # Domain C: Structural - Right Eye (OD)
     cdr_od = Column(String(20))  # 0.5_or_less, 0.6, 0.7, 0.8, 0.9_or_more
     notching_od = Column(String(20))  # absent, unipolar, bipolar
+    rnfl_defect_od = Column(String(20))  # absent, present
     disc_hemorrhage_od = Column(String(20))  # absent, present
     
     # Domain C: Structural - Left Eye (OS)
     cdr_os = Column(String(20))
     notching_os = Column(String(20))
+    rnfl_defect_os = Column(String(20))  # absent, present
     disc_hemorrhage_os = Column(String(20))
     
     # Domain D: Functional - Right Eye (OD)
@@ -69,14 +71,16 @@ class GlaucomaRiskData(Base):
     mean_deviation_os = Column(String(30))
     central_field_os = Column(String(10))
     
-    # Domain E: Ocular - Right Eye (OD)
+    # Domain F: Ocular Risk Modifiers - Right Eye (OD)
     cct_od = Column(String(20))  # normal, thin
     pachymetry_od = Column(Integer)  # Actual value in µm
+    myopia_od = Column(String(20))  # none, low_myopia, mod_high_myopia
     ocular_modifiers_od = Column(JSON, default=list)  # angle_recession, pseudoexfoliation, etc.
     
-    # Domain E: Ocular - Left Eye (OS)
+    # Domain F: Ocular Risk Modifiers - Left Eye (OS)
     cct_os = Column(String(20))
     pachymetry_os = Column(Integer)
+    myopia_os = Column(String(20))  # none, low_myopia, mod_high_myopia
     ocular_modifiers_os = Column(JSON, default=list)
     
     # Domain F: Systemic (Shared)

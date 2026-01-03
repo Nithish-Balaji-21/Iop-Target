@@ -165,6 +165,67 @@ def save_baseline_iop(patient_id: int, baseline_data: BaselineIOPCreate, db: Ses
 
 # ============== Glaucoma Risk Data Endpoints (BEFORE generic routes) ==============
 
+@router.get("/{patient_id}/current-iop")
+def get_current_iop_from_investigation(patient_id: int, db: Session = Depends(get_db)):
+    """
+    Get current IOP from investigation section (current visit IOP).
+    This is used for displaying current measurement in Target IOP calculator.
+    """
+    patient = db.query(Patient).filter(Patient.id == patient_id).first()
+    if not patient:
+        raise HTTPException(status_code=404, detail="Patient not found")
+    
+    # Get latest investigation record
+    investigation_record = db.query(EMRRecord).filter(
+        EMRRecord.patient_id == patient_id,
+        EMRRecord.section_type == 'investigation'
+    ).order_by(EMRRecord.created_at.desc()).first()
+    
+    if investigation_record and investigation_record.data:
+        investigations = investigation_record.data.get('investigations', {})
+        if isinstance(investigations, dict):
+            iop_data = investigations.get('iop', {})
+            if iop_data:
+                import re
+                re_val = iop_data.get('re', '')
+                le_val = iop_data.get('le', '')
+                
+                re_match = re.search(r'(\d+)', str(re_val))
+                le_match = re.search(r'(\d+)', str(le_val))
+                
+                current_iop_od = int(re_match.group(1)) if re_match else None
+                current_iop_os = int(le_match.group(1)) if le_match else None
+                
+                if current_iop_od is not None or current_iop_os is not None:
+                    return {
+                        "exists": True,
+                        "iop_od": current_iop_od,
+                        "iop_os": current_iop_os,
+                        "source": "investigation",
+                        "date": investigation_record.created_at.isoformat() if investigation_record.created_at else None
+                    }
+    
+    # Fallback to latest measurement
+    from app.models import IOPMeasurement
+    latest_measurement = db.query(IOPMeasurement).filter(
+        IOPMeasurement.patient_id == patient_id
+    ).order_by(IOPMeasurement.measurement_date.desc()).first()
+    
+    if latest_measurement:
+        return {
+            "exists": True,
+            "iop_od": latest_measurement.iop_od,
+            "iop_os": latest_measurement.iop_os,
+            "source": "measurement",
+            "date": latest_measurement.measurement_date.isoformat() if latest_measurement.measurement_date else None
+        }
+    
+    return {
+        "exists": False,
+        "message": "No current IOP found in investigation or measurements"
+    }
+
+
 @router.get("/{patient_id}/risk-factors")
 def get_glaucoma_risk_factors(patient_id: int, db: Session = Depends(get_db)):
     """Get extracted glaucoma risk factors for Target IOP calculation"""
@@ -176,9 +237,113 @@ def get_glaucoma_risk_factors(patient_id: int, db: Session = Depends(get_db)):
         GlaucomaRiskData.patient_id == patient_id
     ).first()
     
+    # Calculate BP-derived DOPP if investigation data exists
+    # Also update systemic_factors if low perfusion is detected
+    dopp_info = None
+    try:
+        from app.models import IOPMeasurement, EMRRecord
+        import re
+        
+        # Get latest investigation record
+        investigation_record = db.query(EMRRecord).filter(
+            EMRRecord.patient_id == patient_id,
+            EMRRecord.section_type == 'investigation'
+        ).order_by(EMRRecord.created_at.desc()).first()
+        
+        if investigation_record and investigation_record.data:
+            inv_data = investigation_record.data.get('investigations', {})
+            bp_data = inv_data.get('bp', {})
+            bp_value = bp_data.get('value', '')
+            
+            if bp_value:
+                bp_match = re.search(r'(\d+)\s*[/]\s*(\d+)', str(bp_value))
+                if bp_match:
+                    diastolic = int(bp_match.group(2))
+                    
+                    # Priority: Use IOP from investigation (current visit) first, then latest measurement
+                    current_iop_od = None
+                    current_iop_os = None
+                    
+                    # First try: Get IOP from investigation data (current visit IOP)
+                    iop_data = inv_data.get('iop', {})
+                    if iop_data:
+                        try:
+                            re_val = iop_data.get('re', '')
+                            le_val = iop_data.get('le', '')
+                            re_match = re.search(r'(\d+)', str(re_val))
+                            le_match = re.search(r'(\d+)', str(le_val))
+                            if re_match:
+                                current_iop_od = int(re_match.group(1))
+                            if le_match:
+                                current_iop_os = int(le_match.group(1))
+                        except:
+                            pass
+                    
+                    # Fallback: Use latest measurement if investigation IOP not available
+                    if current_iop_od is None or current_iop_os is None:
+                        latest_measurement = db.query(IOPMeasurement).filter(
+                            IOPMeasurement.patient_id == patient_id
+                        ).order_by(IOPMeasurement.measurement_date.desc()).first()
+                        
+                        if latest_measurement:
+                            if current_iop_od is None:
+                                current_iop_od = latest_measurement.iop_od
+                            if current_iop_os is None:
+                                current_iop_os = latest_measurement.iop_os
+                    
+                    # Calculate DOPP for both eyes
+                    if current_iop_od is not None or current_iop_os is not None:
+                        dopp_od = diastolic - current_iop_od if current_iop_od is not None else None
+                        dopp_os = diastolic - current_iop_os if current_iop_os is not None else None
+                        
+                        low_perfusion_od = dopp_od is not None and dopp_od < 50
+                        low_perfusion_os = dopp_os is not None and dopp_os < 50
+                        
+                        dopp_info = {
+                            "bp_value": bp_value,
+                            "diastolic": diastolic,
+                            "dopp_od": dopp_od,
+                            "dopp_os": dopp_os,
+                            "low_perfusion_od": low_perfusion_od,
+                            "low_perfusion_os": low_perfusion_os,
+                            "iop_od": current_iop_od,
+                            "iop_os": current_iop_os
+                        }
+                        
+                        # Update systemic_factors if low perfusion detected and risk_data exists
+                        if risk_data and (low_perfusion_od or low_perfusion_os):
+                            existing_systemic = risk_data.systemic_factors or []
+                            if 'low_ocular_perfusion' not in existing_systemic:
+                                existing_systemic = list(existing_systemic)  # Make a copy
+                                existing_systemic.append('low_ocular_perfusion')
+                                risk_data.systemic_factors = existing_systemic
+                                db.commit()
+                                db.refresh(risk_data)  # Refresh to get updated data
+                                print(f"✓ Updated systemic_factors: Low Ocular Perfusion Pressure detected (DOPP OD={dopp_od}, OS={dopp_os})")
+                        elif risk_data and not (low_perfusion_od or low_perfusion_os):
+                            # Remove if no longer low
+                            existing_systemic = risk_data.systemic_factors or []
+                            if 'low_ocular_perfusion' in existing_systemic:
+                                existing_systemic = list(existing_systemic)  # Make a copy
+                                existing_systemic.remove('low_ocular_perfusion')
+                                risk_data.systemic_factors = existing_systemic
+                                db.commit()
+                                db.refresh(risk_data)  # Refresh to get updated data
+                                print(f"✓ Updated systemic_factors: DOPP is now normal (OD={dopp_od}, OS={dopp_os}), removed low_ocular_perfusion")
+    except Exception as e:
+        print(f"Error calculating DOPP: {e}")
+        import traceback
+        traceback.print_exc()
+    
     if not risk_data:
         # Return default values with patient age
         age_range = get_age_range(patient.age) if patient.age else "50_to_70"
+        
+        # If DOPP is low, include low_ocular_perfusion in default systemic_factors
+        default_systemic_factors = []
+        if dopp_info and (dopp_info.get('low_perfusion_od') or dopp_info.get('low_perfusion_os')):
+            default_systemic_factors = ['low_ocular_perfusion']
+        
         return {
             "exists": False,
             "data": {
@@ -193,18 +358,19 @@ def get_glaucoma_risk_factors(patient_id: int, db: Session = Depends(get_db)):
                 "cdr_os": "0.5_or_less",
                 "notching_os": "absent",
                 "disc_hemorrhage_os": "absent",
-                "mean_deviation_od": "0_to_minus_6",
+                "mean_deviation_od": "hfa_not_done",  # Default to HFA not done if no data
                 "central_field_od": "no",
-                "mean_deviation_os": "0_to_minus_6",
+                "mean_deviation_os": "hfa_not_done",  # Default to HFA not done if no data
                 "central_field_os": "no",
                 "cct_od": "normal",
                 "cct_os": "normal",
                 "ocular_modifiers_od": [],
                 "ocular_modifiers_os": [],
-                "systemic_factors": [],
+                "systemic_factors": default_systemic_factors,  # Include low_ocular_perfusion if DOPP is low
                 "patient_factors": [],
                 "auto_extracted": False,
-                "manually_verified": False
+                "manually_verified": False,
+                "dopp_info": dopp_info
             }
         }
     
@@ -218,18 +384,22 @@ def get_glaucoma_risk_factors(patient_id: int, db: Session = Depends(get_db)):
             "num_agm": risk_data.num_agm,
             "cdr_od": risk_data.cdr_od,
             "notching_od": risk_data.notching_od,
+            "rnfl_defect_od": risk_data.rnfl_defect_od or "absent",
             "disc_hemorrhage_od": risk_data.disc_hemorrhage_od,
             "cdr_os": risk_data.cdr_os,
             "notching_os": risk_data.notching_os,
+            "rnfl_defect_os": risk_data.rnfl_defect_os or "absent",
             "disc_hemorrhage_os": risk_data.disc_hemorrhage_os,
-            "mean_deviation_od": risk_data.mean_deviation_od,
-            "central_field_od": risk_data.central_field_od,
-            "mean_deviation_os": risk_data.mean_deviation_os,
-            "central_field_os": risk_data.central_field_os,
+            "mean_deviation_od": risk_data.mean_deviation_od or "hfa_not_done",  # Default to HFA not done if not set
+            "central_field_od": risk_data.central_field_od or "no",
+            "mean_deviation_os": risk_data.mean_deviation_os or "hfa_not_done",  # Default to HFA not done if not set
+            "central_field_os": risk_data.central_field_os or "no",
             "cct_od": risk_data.cct_od,
             "pachymetry_od": risk_data.pachymetry_od,
             "cct_os": risk_data.cct_os,
             "pachymetry_os": risk_data.pachymetry_os,
+            "myopia_od": risk_data.myopia_od,
+            "myopia_os": risk_data.myopia_os,
             "ocular_modifiers_od": risk_data.ocular_modifiers_od or [],
             "ocular_modifiers_os": risk_data.ocular_modifiers_os or [],
             "systemic_factors": risk_data.systemic_factors or [],
@@ -239,7 +409,8 @@ def get_glaucoma_risk_factors(patient_id: int, db: Session = Depends(get_db)):
             "diagnosis_od": risk_data.diagnosis_od,
             "diagnosis_os": risk_data.diagnosis_os,
             "auto_extracted": risk_data.auto_extracted,
-            "manually_verified": risk_data.manually_verified
+            "manually_verified": risk_data.manually_verified,
+            "dopp_info": dopp_info  # Include BP calculation info
         }
     }
 
@@ -332,6 +503,65 @@ def save_emr_record(patient_id: int, section_type: str, emr_data: EMRDataCreate,
     # Auto-extract risk factors from EMR data
     extract_risk_factors_from_emr(patient_id, section_type, emr_data.data, db)
     
+    # If investigation section with IOP data, create IOPMeasurement record for graph
+    if section_type == 'investigation':
+        investigations = emr_data.data.get('investigations', {})
+        if isinstance(investigations, dict):
+            iop_data = investigations.get('iop', {})
+            if iop_data:
+                import re
+                re_val = iop_data.get('re', '')
+                le_val = iop_data.get('le', '')
+                date_time_str = iop_data.get('dateTime', '')
+                
+                # Extract IOP values
+                re_match = re.search(r'(\d+)', str(re_val))
+                le_match = re.search(r'(\d+)', str(le_val))
+                
+                iop_od = None
+                iop_os = None
+                
+                if re_match:
+                    iop_od = float(re_match.group(1))
+                if le_match:
+                    iop_os = float(le_match.group(1))
+                
+                # Only create measurement if at least one IOP value exists
+                if iop_od is not None or iop_os is not None:
+                    from app.models import IOPMeasurement
+                    
+                    # Parse date/time if provided, otherwise use current time
+                    measurement_date = datetime.utcnow()
+                    if date_time_str:
+                        try:
+                            # Try to parse various date formats using dateutil
+                            from dateutil import parser
+                            measurement_date = parser.parse(date_time_str)
+                        except:
+                            pass  # Use current time if parsing fails
+                    
+                    # Check if measurement already exists for this date (within 1 hour)
+                    existing = db.query(IOPMeasurement).filter(
+                        IOPMeasurement.patient_id == patient_id,
+                        IOPMeasurement.measurement_date >= measurement_date.replace(hour=0, minute=0, second=0),
+                        IOPMeasurement.measurement_date < measurement_date.replace(hour=23, minute=59, second=59)
+                    ).first()
+                    
+                    if not existing:
+                        # Create new IOPMeasurement record
+                        new_measurement = IOPMeasurement(
+                            patient_id=patient_id,
+                            iop_od=iop_od,
+                            iop_os=iop_os,
+                            measurement_date=measurement_date,
+                            measured_by=emr_data.created_by or 'EMR Investigation',
+                            device_type='Goldmann Tonometry',  # Default, can be updated
+                            clinical_notes=f'IOP recorded from Investigation section'
+                        )
+                        db.add(new_measurement)
+                        db.commit()
+                        print(f"✓ Created IOPMeasurement record: OD={iop_od}, OS={iop_os} for patient {patient_id}")
+    
     return {
         "message": "EMR record saved successfully",
         "id": record.id
@@ -405,14 +635,17 @@ def convert_notch_to_category(notch_value: str) -> str:
 
 
 def convert_pachymetry_to_cct(value: str) -> tuple:
-    """Convert pachymetry value to CCT category and actual value"""
+    """Convert pachymetry value to CCT category and actual value
+    According to Excel: <500 µm = thin (+1 pt), ≥500 µm = normal (0 pts)
+    """
     try:
-        # Extract number from strings like "520 μm", "518", etc.
+        # Extract number from strings like "520 μm", "518", "495", etc.
         import re
         numbers = re.findall(r'\d+', str(value))
         if numbers:
             pach_value = int(numbers[0])
-            cct_category = "normal" if pach_value >= 520 else "thin"
+            # <500 µm = thin, ≥500 µm = normal (matching Excel data)
+            cct_category = "normal" if pach_value >= 500 else "thin"
             return cct_category, pach_value
     except:
         pass
@@ -564,6 +797,13 @@ def extract_risk_factors_from_emr(patient_id: int, section_type: str, data, db: 
             risk_data.disc_hemorrhage_od = 'present'
         if bg_data.get('le') and 'hemorrhage' in bg_data['le'].lower():
             risk_data.disc_hemorrhage_os = 'present'
+        
+        # RNFL defect extraction
+        rnfl_data = exam_data.get('rnflDefect', {})
+        if rnfl_data.get('re'):
+            risk_data.rnfl_defect_od = 'present' if rnfl_data['re'].lower() == 'present' else 'absent'
+        if rnfl_data.get('le'):
+            risk_data.rnfl_defect_os = 'present' if rnfl_data['le'].lower() == 'present' else 'absent'
     
     elif section_type == 'investigation':
         investigations = data.get('investigations', {})
@@ -573,6 +813,9 @@ def extract_risk_factors_from_emr(patient_id: int, section_type: str, data, db: 
             import re as re_module
             
             # IOP extraction from dictionary format
+            # NOTE: Investigation IOP is CURRENT IOP, not baseline IOP
+            # Baseline IOP should come from Complaints section (first untreated IOP)
+            # Investigation IOP is used for BP/DOPP calculation and current status
             iop_data = investigations.get('iop', {})
             if iop_data:
                 try:
@@ -582,12 +825,86 @@ def extract_risk_factors_from_emr(patient_id: int, section_type: str, data, db: 
                     re_match = re_module.search(r'(\d+)', str(re_val))
                     le_match = re_module.search(r'(\d+)', str(le_val))
                     
-                    if re_match:
+                    # Only set baseline IOP from investigation if no baseline exists
+                    # (This handles cases where investigation was done before Complaints section)
+                    if re_match and risk_data.baseline_iop_od is None:
                         risk_data.baseline_iop_od = int(re_match.group(1))
-                    if le_match:
+                    if le_match and risk_data.baseline_iop_os is None:
                         risk_data.baseline_iop_os = int(le_match.group(1))
                 except:
                     pass
+            
+            # BP extraction and DOPP calculation (Diastolic Ocular Perfusion Pressure)
+            # DOPP = Diastolic BP - Current IOP
+            # If DOPP < 50, add "low_ocular_perfusion" to systemic factors
+            bp_data = investigations.get('bp', {})
+            if bp_data:
+                bp_value = bp_data.get('value', '')
+                if bp_value:
+                    try:
+                        # Extract systolic and diastolic from formats like "140/80", "140 / 80", "140/80 mm Hg"
+                        bp_match = re_module.search(r'(\d+)\s*[/]\s*(\d+)', str(bp_value))
+                        if bp_match:
+                            systolic = int(bp_match.group(1))
+                            diastolic = int(bp_match.group(2))
+                            
+                            # Priority: Use IOP from investigation if available, otherwise use latest measurement
+                            current_iop_od = None
+                            current_iop_os = None
+                            
+                            # First try: Get IOP from investigation data (current visit IOP)
+                            if iop_data:
+                                try:
+                                    re_val = iop_data.get('re', '')
+                                    le_val = iop_data.get('le', '')
+                                    re_match = re_module.search(r'(\d+)', str(re_val))
+                                    le_match = re_module.search(r'(\d+)', str(le_val))
+                                    if re_match:
+                                        current_iop_od = int(re_match.group(1))
+                                    if le_match:
+                                        current_iop_os = int(le_match.group(1))
+                                except:
+                                    pass
+                            
+                            # Fallback: Use latest measurement if investigation IOP not available
+                            if current_iop_od is None or current_iop_os is None:
+                                from app.models import IOPMeasurement
+                                latest_measurement = db.query(IOPMeasurement).filter(
+                                    IOPMeasurement.patient_id == patient_id
+                                ).order_by(IOPMeasurement.measurement_date.desc()).first()
+                                
+                                if latest_measurement:
+                                    if current_iop_od is None:
+                                        current_iop_od = latest_measurement.iop_od
+                                    if current_iop_os is None:
+                                        current_iop_os = latest_measurement.iop_os
+                            
+                            # Calculate DOPP for both eyes
+                            # DOPP = Diastolic BP - Current IOP
+                            # If DOPP < 50, add "low_ocular_perfusion" to systemic factors
+                            existing_systemic = risk_data.systemic_factors or []
+                            low_perfusion_detected = False
+                            
+                            if current_iop_od is not None:
+                                dopp_od = diastolic - current_iop_od
+                                if dopp_od < 50:
+                                    if 'low_ocular_perfusion' not in existing_systemic:
+                                        existing_systemic.append('low_ocular_perfusion')
+                                        low_perfusion_detected = True
+                            
+                            if current_iop_os is not None:
+                                dopp_os = diastolic - current_iop_os
+                                if dopp_os < 50:
+                                    if 'low_ocular_perfusion' not in existing_systemic:
+                                        existing_systemic.append('low_ocular_perfusion')
+                                        low_perfusion_detected = True
+                            
+                            if low_perfusion_detected:
+                                risk_data.systemic_factors = existing_systemic
+                                print(f"✓ Low Ocular Perfusion Pressure detected: DOPP OD={dopp_od if current_iop_od else 'N/A'}, OS={dopp_os if current_iop_os else 'N/A'} (BP: {bp_value}, Diastolic: {diastolic}mmHg)")
+                    except Exception as e:
+                        print(f"Error processing BP data: {e}")
+                        pass
             
             # Pachymetry extraction from dictionary format
             pach_data = investigations.get('pachymetry', {})
@@ -702,7 +1019,78 @@ def extract_risk_factors_from_emr(patient_id: int, section_type: str, data, db: 
                     risk_data.ocular_modifiers_od = list(set(existing_od + mods))
                     risk_data.ocular_modifiers_os = list(set(existing_os + mods))
     
+    elif section_type == 'refraction':
+        # Extract myopia from SPH (Spherical) values
+        prescription = data.get('prescription', {})
+        
+        # Helper function to convert SPH to myopia category
+        def sph_to_myopia(sph_str):
+            """Convert SPH value to myopia category
+            - 0 to -0.9: none (no myopia)
+            - -1 to -3: low_myopia
+            - -3.1 and greater: mod_high_myopia
+            """
+            if not sph_str or sph_str == '':
+                return None
+            
+            try:
+                # Parse SPH value (handle negative signs, decimals, remove units)
+                sph_clean = str(sph_str).strip().replace('+', '').replace('DS', '').replace('D', '').replace('Sph', '').replace('SPH', '').strip()
+                sph_value = float(sph_clean)
+                
+                # Map to myopia category
+                if sph_value >= 0 or sph_value > -1:
+                    return 'none'  # 0 to -0.9 (no myopia)
+                elif sph_value >= -3:
+                    return 'low_myopia'  # -1 to -3 (low myopia)
+                else:
+                    return 'mod_high_myopia'  # -3.1 and greater (moderate to high myopia)
+            except (ValueError, AttributeError):
+                return None
+        
+        # Extract from distance prescription (primary)
+        distance = prescription.get('distance', {})
+        myopia_od = None
+        myopia_os = None
+        
+        if distance:
+            od_sph = distance.get('od', {}).get('sph', '')
+            os_sph = distance.get('os', {}).get('sph', '')
+            
+            myopia_od = sph_to_myopia(od_sph)
+            myopia_os = sph_to_myopia(os_sph)
+            
+            if myopia_od:
+                risk_data.myopia_od = myopia_od
+            if myopia_os:
+                risk_data.myopia_os = myopia_os
+        
+        # If distance not available, try near prescription
+        if not myopia_od or not myopia_os:
+            near = prescription.get('near', {})
+            if near:
+                if not myopia_od:
+                    od_sph_near = near.get('od', {}).get('sph', '')
+                    myopia_od_near = sph_to_myopia(od_sph_near)
+                    if myopia_od_near:
+                        risk_data.myopia_od = myopia_od_near
+                
+                if not myopia_os:
+                    os_sph_near = near.get('os', {}).get('sph', '')
+                    myopia_os_near = sph_to_myopia(os_sph_near)
+                    if myopia_os_near:
+                        risk_data.myopia_os = myopia_os_near
+    
     risk_data.auto_extracted = True
     risk_data.extracted_at = datetime.utcnow()
     
+    # Debug logging
+    if section_type == 'fundusexam':
+        print(f"✓ Fundus Exam extraction: RNFL OD={risk_data.rnfl_defect_od}, OS={risk_data.rnfl_defect_os}")
+    elif section_type == 'investigation':
+        print(f"✓ Investigation extraction: CCT OD={risk_data.cct_od} (pach={risk_data.pachymetry_od}), OS={risk_data.cct_os} (pach={risk_data.pachymetry_os})")
+    elif section_type == 'refraction':
+        print(f"✓ Refraction extraction: Myopia OD={risk_data.myopia_od}, OS={risk_data.myopia_os}")
+    
     db.commit()
+    db.refresh(risk_data)  # Refresh to ensure data is saved

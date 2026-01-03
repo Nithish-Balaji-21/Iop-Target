@@ -4,7 +4,7 @@ import '../styles/VisitForm.css';
 
 function VisitForm({ patientId, onSuccess, onCancel }) {
   const [formData, setFormData] = useState({
-    visit_date: new Date().toISOString().slice(0, 16),
+    visit_date: '',
     visit_type: 'ROUTINE',
     findings: '',
     treatment_changes: '',

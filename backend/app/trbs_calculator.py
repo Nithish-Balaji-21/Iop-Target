@@ -68,13 +68,13 @@ class TRBSCalculator:
     NOW CALCULATES SEPARATELY FOR EACH EYE
     
     Risk Tiers (based on TRBS score):
-    - 0-6 (Low): 20-25% reduction
-    - 7-12 (Moderate): 30-35% reduction
-    - 13-18 (High): 40-45% reduction
-    - 19-25 (Very High): ≥50% reduction
+    - 1-6 (Low): 20-25% reduction (EMGT/OHTS)
+    - 7-12 (Moderate): 30-35% reduction (CNGTS)
+    - 13-18 (High): 40-45% reduction (AGIS)
+    - ≥19 (Very High): ≥50% reduction (aim ≤12 mmHg)
     """
     
-    # Domain A: Demographic Risk (0-4)
+    # Domain A: Demographic Risk (1-4) - MIN is 1, not 0 (age always contributes)
     AGE_SCORES = {
         "over_70": 1,
         "50_to_70": 2,
@@ -87,13 +87,14 @@ class TRBSCalculator:
     }
     
     # Domain B: Baseline IOP (0-4) - Untreated IOP
-    # <22mmHg = 0, 22-24 = 1, 24-26 = 2, 26-28 = 3, 28-30+ = 4
+    # <22mmHg = 0, 22 to <24 = 1, 24 to <26 = 2, 26 to <28 = 3, 28 to ≤30 = 4
+    # Note: >30 is still scored as 4, but triggers upper cap logic
     BASELINE_IOP_SCORES = {
         "less_than_22": 0,
         "22_to_24": 1,
         "24_to_26": 2,
         "26_to_28": 3,
-        "28_to_30_or_more": 4
+        "28_to_30_or_more": 4  # Includes 28 to ≤30, and >30 (but >30 uses upper cap)
     }
     
     # AGM adjustment for baseline IOP
@@ -131,13 +132,13 @@ class TRBSCalculator:
     }
     
     # Domain D: Functional/Visual Field Changes (0-6)
-    # HFA not done in first visit = 0, >-6 dB = 1, -6 to -12 = 2, -12 to -20 = 3, <-20 dB = 4, HFA not possible = 4
+    # HFA not done in first visit = 0, ≥-6 dB = 1, -6.01 to -12 = 2, -12.01 to -20 = 3, <-20.01 dB = 4, HFA not possible = 4
     MEAN_DEVIATION_SCORES = {
         "hfa_not_done": 0,
-        "greater_than_minus_6": 1,
-        "minus_6_to_minus_12": 2,
-        "minus_12_to_minus_20": 3,
-        "less_than_minus_20": 4,
+        "greater_than_minus_6": 1,  # ≥-6 dB
+        "minus_6_to_minus_12": 2,   # -6.01 to -12 dB
+        "minus_12_to_minus_20": 3,  # -12.01 to -20 dB
+        "less_than_minus_20": 4,    # <-20.01 dB
         "hfa_not_possible": 4
     }
     
@@ -188,12 +189,18 @@ class TRBSCalculator:
     ]
     
     # Upper cap based on vertical CDR when baseline IOP > 30mmHg
+    # If baseline IOP > 30mm Hg, use absolute upper cap:
+    # ≤0.5: ≤18mm Hg
+    # 0.6: 16-18mm Hg (use 18 as max)
+    # 0.7: 14-16mm Hg (use 16 as max)
+    # 0.8: 12-14mm Hg (use 14 as max)
+    # ≥0.9: ≤12 mm Hg
     CDR_UPPER_CAP = {
-        "0.5_or_less": 18,
-        "0.6": 18,      # 16-18 mmHg
-        "0.7": 16,      # 14-16 mmHg
-        "0.8": 14,      # 12-14 mmHg
-        "0.9_or_more": 12  # ≤12 mmHg
+        "0.5_or_less": 18,  # ≤18mm Hg
+        "0.6": 18,          # 16-18mm Hg (max is 18)
+        "0.7": 16,          # 14-16mm Hg (max is 16)
+        "0.8": 14,          # 12-14mm Hg (max is 14)
+        "0.9_or_more": 12   # ≤12 mm Hg
     }
     
     # Risk tier definitions (reduction percentages based on TRBS score)
@@ -252,11 +259,15 @@ class TRBSCalculator:
     
     @staticmethod
     def calculate_domain_a(age: str, family_history: str) -> int:
-        """Calculate Domain A: Demographic Risk (0-4)"""
+        """Calculate Domain A: Demographic Risk (1-4)
+        
+        Min domain score is 1 (age always contributes at least 1 point)
+        Max domain score is 4
+        """
         score = 0
-        score += TRBSCalculator.AGE_SCORES.get(age, 0)
+        score += TRBSCalculator.AGE_SCORES.get(age, 2)  # Default to 50-70 if not specified
         score += TRBSCalculator.FAMILY_HISTORY_SCORES.get(family_history, 0)
-        return min(score, 4)  # Cap at max domain score
+        return max(1, min(score, 4))  # Min is 1, max is 4
     
     @staticmethod
     def calculate_domain_b(baseline_iop: float, num_agm: str = "0") -> int:
@@ -277,15 +288,16 @@ class TRBSCalculator:
         untreated_iop = baseline_iop + agm_adj
         
         # Determine score based on untreated IOP
+        # <22mmHg = 0, 22 to <24 = 1, 24 to <26 = 2, 26 to <28 = 3, 28 to ≤30 = 4
         if untreated_iop < 22:
             return 0
-        elif untreated_iop < 24:
+        elif untreated_iop < 24:  # 22 to <24
             return 1
-        elif untreated_iop < 26:
+        elif untreated_iop < 26:  # 24 to <26
             return 2
-        elif untreated_iop < 28:
+        elif untreated_iop < 28:  # 26 to <28
             return 3
-        else:
+        else:  # 28 to ≤30 (and >30, but >30 uses upper cap)
             return 4
     
     @staticmethod
@@ -374,14 +386,47 @@ class TRBSCalculator:
         
         If baseline IOP > 30mm Hg, use absolute upper cap based on CDR:
         - ≤0.5: ≤18mm Hg
-        - 0.6: 16-18mm Hg
-        - 0.7: 14-16mm Hg
-        - 0.8: 12-14mm Hg
+        - 0.6: 16-18mm Hg (use 18 as max)
+        - 0.7: 14-16mm Hg (use 16 as max)
+        - 0.8: 12-14mm Hg (use 14 as max)
         - ≥0.9: ≤12 mm Hg
         """
         if baseline_iop <= 30:
             return None  # No cap applies
         return TRBSCalculator.CDR_UPPER_CAP.get(cdr, 18)
+    
+    @staticmethod
+    def calculate_followup_target_iop(
+        current_iop: float,
+        baseline_iop: float,
+        reduction_percentage: int,
+        cdr: str
+    ) -> float:
+        """
+        Calculate target IOP for follow-up visit.
+        
+        Formula: min(% reduction based on current visit IOP and MD risk score vs upper cap)
+        
+        Args:
+            current_iop: Current visit IOP (from investigation)
+            baseline_iop: Original baseline IOP (for upper cap check)
+            reduction_percentage: Reduction percentage from TRBS
+            cdr: Cup-to-disc ratio (for upper cap)
+            
+        Returns:
+            Target IOP for follow-up visit
+        """
+        # Calculate target based on current IOP with reduction percentage
+        target_from_current = current_iop * (1 - reduction_percentage / 100)
+        
+        # Get upper cap if baseline > 30mmHg
+        upper_cap = TRBSCalculator.get_upper_cap_for_cdr(cdr, baseline_iop)
+        
+        # Return minimum of calculated target and upper cap
+        if upper_cap is not None:
+            return min(target_from_current, upper_cap)
+        
+        return target_from_current
     
     @classmethod
     def calculate_single_eye(
@@ -448,8 +493,12 @@ class TRBSCalculator:
         }
         
         # Calculate total TRBS
+        # Total = Sum of risk factors (Range: 0-26) + sum of all risk modifiers
+        # Risk factors: Domain A (1-4) + Domain B (0-4) + Domain C (0-9) + Domain D (0-6) + Domain E (0-3) = 0-26
+        # Risk modifiers: Domain F (0-8) + Domain G (0-5) = 0-13
+        # Total range: 0-39, but Domain A minimum is 1, so minimum TRBS is 1
         trbs_score = domain_a + domain_b + domain_c + domain_d + domain_e + domain_f + domain_g
-        trbs_score = max(1, min(trbs_score, 39))  # Clamp to 1-39
+        trbs_score = max(1, min(trbs_score, 39))  # Clamp to 1-39 (min is 1 because Domain A min is 1)
         
         # Get risk tier and reduction parameters
         risk_tier, tier_config = cls.get_risk_tier(trbs_score)
@@ -662,28 +711,28 @@ def calculate_target_iop(
         # Domain B - Baseline IOP (shared)
         num_agm=risk_factors.get("num_agm", "0"),
         # Domain C - Structural per eye
-        cdr_od=risk_factors.get("cdr_od", risk_factors.get("cdr", "0.5_or_less")),
-        notching_od=risk_factors.get("notching_od", risk_factors.get("notching", "absent")),
-        rnfl_defect_od=risk_factors.get("rnfl_defect_od", risk_factors.get("rnfl_defect", "absent")),
-        disc_hemorrhage_od=risk_factors.get("disc_hemorrhage_od", risk_factors.get("disc_hemorrhage", "absent")),
-        cdr_os=risk_factors.get("cdr_os", risk_factors.get("cdr", "0.5_or_less")),
-        notching_os=risk_factors.get("notching_os", risk_factors.get("notching", "absent")),
-        rnfl_defect_os=risk_factors.get("rnfl_defect_os", risk_factors.get("rnfl_defect", "absent")),
-        disc_hemorrhage_os=risk_factors.get("disc_hemorrhage_os", risk_factors.get("disc_hemorrhage", "absent")),
+        cdr_od=risk_factors.get("cdr_od", "0.5_or_less"),
+        notching_od=risk_factors.get("notching_od", "absent"),
+        rnfl_defect_od=risk_factors.get("rnfl_defect_od", "absent"),
+        disc_hemorrhage_od=risk_factors.get("disc_hemorrhage_od", "absent"),
+        cdr_os=risk_factors.get("cdr_os", "0.5_or_less"),
+        notching_os=risk_factors.get("notching_os", "absent"),
+        rnfl_defect_os=risk_factors.get("rnfl_defect_os", "absent"),
+        disc_hemorrhage_os=risk_factors.get("disc_hemorrhage_os", "absent"),
         # Domain D - Visual Field per eye
-        mean_deviation_od=risk_factors.get("mean_deviation_od", risk_factors.get("mean_deviation", "hfa_not_done")),
-        central_field_od=risk_factors.get("central_field_od", risk_factors.get("central_field", "no")),
-        mean_deviation_os=risk_factors.get("mean_deviation_os", risk_factors.get("mean_deviation", "hfa_not_done")),
-        central_field_os=risk_factors.get("central_field_os", risk_factors.get("central_field", "no")),
+        mean_deviation_od=risk_factors.get("mean_deviation_od", "hfa_not_done"),
+        central_field_od=risk_factors.get("central_field_od", "no"),
+        mean_deviation_os=risk_factors.get("mean_deviation_os", "hfa_not_done"),
+        central_field_os=risk_factors.get("central_field_os", "no"),
         # Domain E - Patient Factors (shared)
         patient_factors=risk_factors.get("patient_factors", []),
         # Domain F - Ocular Modifiers per eye
-        cct_od=risk_factors.get("cct_od", risk_factors.get("cct", "normal")),
-        myopia_od=risk_factors.get("myopia_od", risk_factors.get("myopia", "none")),
-        ocular_modifiers_od=risk_factors.get("ocular_modifiers_od", risk_factors.get("ocular_modifiers", [])),
-        cct_os=risk_factors.get("cct_os", risk_factors.get("cct", "normal")),
-        myopia_os=risk_factors.get("myopia_os", risk_factors.get("myopia", "none")),
-        ocular_modifiers_os=risk_factors.get("ocular_modifiers_os", risk_factors.get("ocular_modifiers", [])),
+        cct_od=risk_factors.get("cct_od", "normal"),
+        myopia_od=risk_factors.get("myopia_od", "none"),
+        ocular_modifiers_od=risk_factors.get("ocular_modifiers_od", []),
+        cct_os=risk_factors.get("cct_os", "normal"),
+        myopia_os=risk_factors.get("myopia_os", "none"),
+        ocular_modifiers_os=risk_factors.get("ocular_modifiers_os", []),
         # Domain G - Systemic (shared)
         systemic_factors=risk_factors.get("systemic_factors", []),
         use_aggressive_reduction=risk_factors.get("use_aggressive_reduction", False)

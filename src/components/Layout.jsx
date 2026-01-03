@@ -38,7 +38,7 @@ export default function Layout({
             {/* Top Header Bar */}
             <div className="layout-header">
                 <div className="header-left">
-                    <span className="header-brand">eyeNotes</span>
+                    <span className="header-brand">i-Target</span>
                     <div className="op-toggle">
                         <span className="op-label">OP</span>
                     </div>

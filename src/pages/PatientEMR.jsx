@@ -8,6 +8,146 @@ import TrendChart from '../components/TrendChart';
 import { History, FundusExam, Investigation, VisualField, Diagnosis, Refraction, AnteriorSegment, TargetIOP } from '../components/EMR';
 import './PatientEMR.css';
 
+// Follow Up Section Component
+function FollowUpSection({ patientId, patient, doctorName }) {
+    const [nextFollowUpDate, setNextFollowUpDate] = useState('');
+    const [followUpNotes, setFollowUpNotes] = useState('');
+    const [saving, setSaving] = useState(false);
+    const [saveMessage, setSaveMessage] = useState('');
+    const [lastVisitDate, setLastVisitDate] = useState('N/A');
+
+    // Fetch last visit date
+    useEffect(() => {
+        const fetchLastVisit = async () => {
+            if (!patientId) return;
+            try {
+                const response = await fetch(`http://localhost:8000/api/risk/${patientId}/visits?limit=1`);
+                if (response.ok) {
+                    const visits = await response.json();
+                    if (visits && visits.length > 0) {
+                        const lastVisit = visits[0];
+                        const visitDate = new Date(lastVisit.visit_date);
+                        setLastVisitDate(visitDate.toLocaleDateString('en-US', {
+                            year: 'numeric',
+                            month: 'short',
+                            day: 'numeric'
+                        }));
+                    }
+                }
+            } catch (err) {
+                console.error('Error fetching last visit:', err);
+            }
+        };
+        fetchLastVisit();
+    }, [patientId]);
+
+    const handleScheduleFollowUp = async () => {
+        if (!nextFollowUpDate) {
+            alert('Please select a follow-up date');
+            return;
+        }
+
+        setSaving(true);
+        setSaveMessage('');
+        
+        try {
+            const response = await fetch(`http://localhost:8000/api/risk/${patientId}/visit`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    visit_date: new Date().toISOString(), // Current visit date
+                    visit_type: 'ROUTINE',
+                    findings: followUpNotes || 'Follow-up scheduled',
+                    treatment_changes: '',
+                    doctor_notes: `Next follow-up scheduled for: ${nextFollowUpDate}. Notes: ${followUpNotes}`,
+                    patient_id: patientId, // Include patient_id in body as per VisitCreate schema
+                    created_by: doctorName || 'Doctor'
+                })
+            });
+
+            if (response.ok) {
+                const result = await response.json();
+                setSaveMessage('✓ Follow-up scheduled successfully!');
+                // Clear form after successful save
+                setTimeout(() => {
+                    setNextFollowUpDate('');
+                    setFollowUpNotes('');
+                    setSaveMessage('');
+                }, 3000);
+            } else {
+                let errorMessage = 'Unknown error';
+                try {
+                    const errorData = await response.json();
+                    errorMessage = errorData.detail || errorData.message || JSON.stringify(errorData);
+                } catch (parseErr) {
+                    errorMessage = `HTTP ${response.status}: ${response.statusText}`;
+                }
+                alert('Error scheduling follow-up: ' + errorMessage);
+            }
+        } catch (err) {
+            console.error('Error scheduling follow-up:', err);
+            alert('Error scheduling follow-up: ' + (err.message || 'Network error. Please check your connection.'));
+        } finally {
+            setSaving(false);
+        }
+    };
+
+    return (
+        <div className="emr-section-content">
+            <div className="followup-section">
+                <h3>Follow Up</h3>
+                
+                {/* IOP Trend Graph */}
+                <div className="followup-graph-section">
+                    <h4>📊 IOP Trend Analysis</h4>
+                    <div className="trend-chart-wrapper">
+                        <TrendChart patientId={patientId} />
+                    </div>
+                </div>
+                
+                <div className="followup-card">
+                    <div className="followup-info">
+                        <p><strong>Patient:</strong> {patient?.name || 'N/A'}</p>
+                        <p><strong>Glaucoma Type:</strong> {patient?.glaucoma_type || 'Not specified'}</p>
+                        <p><strong>Last Visit:</strong> {lastVisitDate}</p>
+                    </div>
+                    <div className="followup-schedule">
+                        <label>Next Follow Up Date</label>
+                        <input 
+                            type="date" 
+                            className="followup-date-input"
+                            value={nextFollowUpDate}
+                            onChange={(e) => setNextFollowUpDate(e.target.value)}
+                            min={new Date().toISOString().split('T')[0]}
+                        />
+                    </div>
+                    <div className="followup-notes">
+                        <label>Notes</label>
+                        <textarea 
+                            placeholder="Enter follow up notes..." 
+                            rows="4"
+                            value={followUpNotes}
+                            onChange={(e) => setFollowUpNotes(e.target.value)}
+                        ></textarea>
+                    </div>
+                    {saveMessage && (
+                        <div className="followup-success-message">{saveMessage}</div>
+                    )}
+                    <button 
+                        className="btn-save-followup"
+                        onClick={handleScheduleFollowUp}
+                        disabled={saving || !nextFollowUpDate}
+                    >
+                        {saving ? '⏳ Scheduling...' : '📅 Schedule Follow Up'}
+                    </button>
+                </div>
+            </div>
+        </div>
+    );
+}
+
 export default function PatientEMR({ patientId, doctorName, onBackToQueue }) {
     const [patient, setPatient] = useState(null);
     const [activeSection, setActiveSection] = useState('Diagnosis');
@@ -16,6 +156,10 @@ export default function PatientEMR({ patientId, doctorName, onBackToQueue }) {
         'Care Plan': false
     });
     const [loading, setLoading] = useState(true);
+    
+    // First Visit Popup State
+    const [showFirstVisitPopup, setShowFirstVisitPopup] = useState(false);
+    const [firstVisitDismissed, setFirstVisitDismissed] = useState(false);
     
     // Visit type and baseline IOP state
     const [visitType, setVisitType] = useState('followup');
@@ -58,6 +202,71 @@ export default function PatientEMR({ patientId, doctorName, onBackToQueue }) {
         fetchPatientData();
         fetchExistingBaseline();
     }, [patientId]);
+    
+    // Check if first visit (no target IOP set) - for PatientEMR page
+    useEffect(() => {
+        const checkFirstVisit = async () => {
+            if (!patientId || firstVisitDismissed) {
+                console.log('⏸️ First visit check skipped:', { patientId, firstVisitDismissed });
+                return;
+            }
+            
+            // Wait for loading to complete
+            if (loading) {
+                console.log('⏳ Waiting for patient data to load...');
+                return;
+            }
+            
+            try {
+                // Check if target exists
+                const targetResponse = await fetch(`http://localhost:8000/api/targets/${patientId}/current`);
+                let hasTarget = false;
+                if (targetResponse.ok) {
+                    const targetData = await targetResponse.json();
+                    hasTarget = targetData && targetData.exists !== false && targetData.target_iop_od;
+                    console.log('📊 Target check:', { hasTarget, targetData });
+                }
+                
+                // Check if patient has any measurements
+                const measurementResponse = await fetch(`http://localhost:8000/api/measurements/${patientId}/latest`);
+                let hasMeasurements = false;
+                if (measurementResponse.ok) {
+                    const measurementData = await measurementResponse.json();
+                    hasMeasurements = measurementData.exists === true;
+                    console.log('📊 Measurement check:', { hasMeasurements, measurementData });
+                }
+                
+                // If no target and no measurements, it's likely first visit
+                if (!hasTarget && !hasMeasurements && !firstVisitDismissed) {
+                    console.log('🎯 First visit detected in PatientEMR - showing popup', { hasTarget, hasMeasurements, firstVisitDismissed });
+                    setShowFirstVisitPopup(true);
+                } else {
+                    console.log('ℹ️ Not first visit:', { hasTarget, hasMeasurements, firstVisitDismissed });
+                }
+            } catch (error) {
+                console.error('Error checking first visit:', error);
+                // If error, assume first visit if no target
+                if (!firstVisitDismissed) {
+                    console.log('🎯 First visit detected (error) - showing popup');
+                    setShowFirstVisitPopup(true);
+                }
+            }
+        };
+        
+        // Check immediately and after delays to ensure all data is loaded
+        checkFirstVisit();
+        const timer1 = setTimeout(() => {
+            checkFirstVisit();
+        }, 500);
+        const timer2 = setTimeout(() => {
+            checkFirstVisit();
+        }, 1500);
+        
+        return () => {
+            clearTimeout(timer1);
+            clearTimeout(timer2);
+        };
+    }, [patientId, loading, firstVisitDismissed]);
 
     const fetchPatientData = async () => {
         try {
@@ -493,34 +702,11 @@ export default function PatientEMR({ patientId, doctorName, onBackToQueue }) {
                 );
             case 'Follow Up':
                 return (
-                    <div className="emr-section-content">
-                        <div className="followup-section">
-                            <h3>Follow Up</h3>
-                            
-                            {/* IOP Trend Graph */}
-                            <div className="followup-graph-section">
-                                <h4>📊 IOP Trend Analysis</h4>
-                                <TrendChart patientId={patientId} />
-                            </div>
-                            
-                            <div className="followup-card">
-                                <div className="followup-info">
-                                    <p><strong>Patient:</strong> {patient?.name}</p>
-                                    <p><strong>Glaucoma Type:</strong> {patient?.glaucoma_type || 'Not specified'}</p>
-                                    <p><strong>Last Visit:</strong> {patient?.last_visit || 'N/A'}</p>
-                                </div>
-                                <div className="followup-schedule">
-                                    <label>Next Follow Up Date</label>
-                                    <input type="date" className="followup-date-input" />
-                                </div>
-                                <div className="followup-notes">
-                                    <label>Notes</label>
-                                    <textarea placeholder="Enter follow up notes..." rows="4"></textarea>
-                                </div>
-                                <button className="btn-save-followup">Schedule Follow Up</button>
-                            </div>
-                        </div>
-                    </div>
+                    <FollowUpSection 
+                        patientId={patientId} 
+                        patient={patient}
+                        doctorName={doctorName}
+                    />
                 );
             case 'Any Vulnerabilities':
             case 'Vision':
@@ -592,6 +778,96 @@ export default function PatientEMR({ patientId, doctorName, onBackToQueue }) {
 
             {/* Section Content */}
             {renderContent()}
+            
+            {/* First Visit Popup - Calculate Target IOP */}
+            {showFirstVisitPopup && !firstVisitDismissed && (
+                <div className="popup-overlay" style={{
+                    position: 'fixed',
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    zIndex: 10000
+                }}>
+                    <div className="popup-content" style={{
+                        background: 'white',
+                        borderRadius: '12px',
+                        padding: '24px',
+                        maxWidth: '500px',
+                        width: '90%',
+                        boxShadow: '0 4px 20px rgba(0, 0, 0, 0.3)'
+                    }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+                            <h3 style={{ margin: 0, color: '#1a7a7c' }}>🎯 First Visit - Calculate Target IOP</h3>
+                            <button 
+                                onClick={() => {
+                                    setShowFirstVisitPopup(false);
+                                    setFirstVisitDismissed(true);
+                                }}
+                                style={{
+                                    background: 'none',
+                                    border: 'none',
+                                    fontSize: '24px',
+                                    cursor: 'pointer',
+                                    color: '#666'
+                                }}
+                            >×</button>
+                        </div>
+                        <div style={{ marginBottom: '20px' }}>
+                            <p>
+                                <strong>Welcome!</strong> This appears to be the patient's first visit.
+                            </p>
+                            <p>
+                                Please calculate <strong>baseline IOP</strong> and <strong>target IOP</strong> to establish treatment goals.
+                            </p>
+                            <ol style={{ marginLeft: '20px', marginTop: '10px' }}>
+                                <li>Go to <strong>"Complaints"</strong> section to calculate baseline IOP</li>
+                                <li>Then navigate to <strong>"Special Workflow" → "Target IOP"</strong> to calculate the target IOP</li>
+                            </ol>
+                        </div>
+                        <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
+                            <button 
+                                onClick={() => {
+                                    setShowFirstVisitPopup(false);
+                                    setFirstVisitDismissed(true);
+                                }}
+                                style={{
+                                    padding: '10px 20px',
+                                    background: '#e5e7eb',
+                                    border: 'none',
+                                    borderRadius: '6px',
+                                    cursor: 'pointer',
+                                    fontWeight: 600
+                                }}
+                            >
+                                Later
+                            </button>
+                            <button 
+                                onClick={() => {
+                                    setShowFirstVisitPopup(false);
+                                    setFirstVisitDismissed(true);
+                                    setActiveSection('Complaints');
+                                }}
+                                style={{
+                                    padding: '10px 20px',
+                                    background: '#1a7a7c',
+                                    color: 'white',
+                                    border: 'none',
+                                    borderRadius: '6px',
+                                    cursor: 'pointer',
+                                    fontWeight: 600
+                                }}
+                            >
+                                Calculate Target IOP Now
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </Layout>
     );
 }

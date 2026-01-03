@@ -158,10 +158,19 @@ export const useCurrentTarget = (patientId) => {
     setLoading(true);
     try {
       const data = await targetService.getCurrentTarget(patientId);
-      setTarget(data);
+      // Handle new format with exists flag
+      if (data && data.exists !== false && data.target_iop_od) {
+        setTarget(data);
+      } else {
+        setTarget(null);
+      }
       setError(null);
     } catch (err) {
-      setError(err.message);
+      setTarget(null);
+      // Don't treat "no target" as an error
+      if (!err.message.includes('404')) {
+        setError(err.message);
+      }
     } finally {
       setLoading(false);
     }

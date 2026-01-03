@@ -8,6 +8,7 @@ import { VisitHistory } from './VisitHistory';
 import TargetIOPCalculator from './TargetIOPCalculator';
 import TargetIOPDisplay from './TargetIOPDisplay';
 import RecalculationPopup from './RecalculationPopup';
+import EMRPanel from './EMR/EMRPanel';
 import '../styles/PatientDashboard.css';
 
 // Helper function to get glaucoma type full form
@@ -299,6 +300,12 @@ function PatientDashboard({ patientId, onBack }) {
         >
           🏥 Visits
         </button>
+        <button 
+          className={`tab-button ${activeTab === 'emr' ? 'active' : ''}`}
+          onClick={() => handleTabChange('emr')}
+        >
+          📋 EMR Data
+        </button>
       </div>
 
       {/* Tab Content */}
@@ -449,6 +456,23 @@ function PatientDashboard({ patientId, onBack }) {
               key={visitRefreshKey}
               patientId={patientId} 
             />
+          </div>
+        )}
+
+        {/* EMR Tab */}
+        {activeTab === 'emr' && (
+          <div className="emr-tab">
+            <EMRPanel 
+              patientId={patientId}
+              onDataSaved={() => {
+                setSuccessMessage('EMR data saved! You can now use "Auto-populate from EMR" in Target IOP Calculator.');
+                setTimeout(() => setSuccessMessage(''), 5000);
+              }}
+            />
+            <div className="emr-help-note">
+              <p>💡 <strong>Tip:</strong> After entering EMR data, go to the <strong>Target IOP</strong> tab and click 
+              <strong> "📥 Auto-populate from EMR"</strong> to automatically fill risk factor fields.</p>
+            </div>
           </div>
         )}
       </div>

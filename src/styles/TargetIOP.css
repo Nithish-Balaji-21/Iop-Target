@@ -8,10 +8,69 @@
   margin-bottom: 2rem;
 }
 
+/* Calculator Header with Auto-populate Button */
+.target-iop-calculator .calculator-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-bottom: 0.5rem;
+}
+
 .target-iop-calculator h2 {
   color: #1e40af;
-  margin-bottom: 0.5rem;
+  margin-bottom: 0;
   font-size: 1.5rem;
+}
+
+/* EMR Auto-populate Button */
+.emr-populate-btn {
+  padding: 0.6rem 1.2rem;
+  background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 4px rgba(79, 70, 229, 0.3);
+}
+
+.emr-populate-btn:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(79, 70, 229, 0.4);
+}
+
+.emr-populate-btn:disabled {
+  background: #9ca3af;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+.emr-populate-btn.populated {
+  background: linear-gradient(135deg, #059669 0%, #10b981 100%);
+  box-shadow: 0 2px 4px rgba(5, 150, 105, 0.3);
+}
+
+.emr-populate-btn.populated:hover:not(:disabled) {
+  box-shadow: 0 4px 8px rgba(5, 150, 105, 0.4);
+}
+
+/* EMR Notice in info text */
+.info-text .emr-notice {
+  display: inline-block;
+  margin-left: 0.5rem;
+  padding: 0.2rem 0.5rem;
+  background: #ecfdf5;
+  color: #059669;
+  border-radius: 4px;
+  font-weight: 500;
+  font-style: normal;
 }
 
 .target-iop-calculator .info-text {

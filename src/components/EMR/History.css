@@ -1,0 +1,843 @@
+/* EMR History Component Styles */
+
+.emr-history-container {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  overflow: hidden;
+}
+
+/* Tab Navigation */
+.history-tabs {
+  display: flex;
+  background: #f8f9fa;
+  border-bottom: 2px solid #e8f4f8;
+}
+
+.history-tab {
+  flex: 1;
+  padding: 14px 20px;
+  border: none;
+  background: transparent;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #64748b;
+  cursor: pointer;
+  transition: all 0.2s;
+  position: relative;
+}
+
+.history-tab:hover {
+  color: #1a7a7c;
+  background: rgba(26, 122, 124, 0.05);
+}
+
+.history-tab.active {
+  color: #1a7a7c;
+  background: white;
+}
+
+.history-tab.active::after {
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: #1a7a7c;
+}
+
+/* Systemic History Content */
+.systemic-history-content {
+  padding: 20px;
+}
+
+.risk-info {
+  background: #e8f6ff;
+  border-left: 4px solid #3498db;
+  padding: 12px 16px;
+  margin-bottom: 20px;
+  border-radius: 0 8px 8px 0;
+  font-size: 0.9rem;
+  color: #2c3e50;
+}
+
+.info-icon {
+  margin-right: 8px;
+}
+
+/* Systemic Status Bar */
+.systemic-status-bar {
+  margin-bottom: 20px;
+}
+
+.status-badge {
+  display: inline-block;
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.status-badge.nil {
+  background: #10b981;
+  color: white;
+}
+
+.status-badge.has-history {
+  background: #f59e0b;
+  color: white;
+}
+
+/* Toggle List */
+.toggle-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 20px;
+}
+
+.toggle-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  background: #f8fafc;
+  border-radius: 6px;
+  border: 1px solid #e2e8f0;
+}
+
+.toggle-label {
+  font-size: 0.9rem;
+  color: #2c3e50;
+  min-width: 200px;
+}
+
+.toggle-buttons {
+  display: flex;
+  gap: 4px;
+}
+
+.toggle-btn {
+  padding: 6px 16px;
+  border: 1px solid #e2e8f0;
+  background: white;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  border-radius: 4px;
+}
+
+.toggle-btn:hover {
+  border-color: #94a3b8;
+}
+
+.toggle-btn.active.no {
+  background: #0ea5e9;
+  color: white;
+  border-color: #0ea5e9;
+}
+
+.toggle-btn.active.yes {
+  background: #f59e0b;
+  color: white;
+  border-color: #f59e0b;
+}
+
+/* Others row */
+.others-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 8px 12px;
+  background: #f8fafc;
+  border-radius: 6px;
+  border: 1px solid #e2e8f0;
+  margin-bottom: 12px;
+}
+
+.others-select {
+  flex: 1;
+  padding: 8px 12px;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  max-width: 300px;
+}
+
+.check-icon {
+  color: #10b981;
+  font-size: 1.2rem;
+}
+
+/* Remarks row */
+.remarks-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  padding: 8px 12px;
+  background: #f8fafc;
+  border-radius: 6px;
+  border: 1px solid #e2e8f0;
+  margin-bottom: 20px;
+}
+
+.remarks-input {
+  flex: 1;
+  padding: 8px 12px;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  resize: vertical;
+  min-height: 60px;
+}
+
+/* Action Buttons */
+.action-buttons {
+  display: flex;
+  gap: 12px;
+  margin-top: 20px;
+}
+
+.btn-update {
+  background: #0ea5e9;
+  color: white;
+  border: none;
+  padding: 10px 24px;
+  border-radius: 6px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.btn-update:hover {
+  background: #0284c7;
+}
+
+.btn-clear {
+  background: #94a3b8;
+  color: white;
+  border: none;
+  padding: 10px 24px;
+  border-radius: 6px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.btn-clear:hover {
+  background: #64748b;
+}
+
+/* Ocular History Content - Exact Match to Reference */
+.ocular-history-content {
+  padding: 20px;
+}
+
+/* AGM (Anti-Glaucoma Medication) Section */
+.agm-section {
+  background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+  border: 2px solid #2196f3;
+  border-radius: 10px;
+  padding: 20px;
+  margin-bottom: 20px;
+}
+
+.agm-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.agm-icon {
+  font-size: 1.3rem;
+}
+
+.agm-title {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #1565c0;
+}
+
+.agm-info {
+  background: rgba(255, 255, 255, 0.7);
+  padding: 10px 14px;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  color: #1565c0;
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.agm-info .info-icon {
+  font-size: 1rem;
+}
+
+.agm-toggle-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: white;
+  padding: 12px 16px;
+  border-radius: 8px;
+  margin-bottom: 16px;
+}
+
+.agm-label {
+  font-weight: 600;
+  color: #333;
+}
+
+.agm-details {
+  background: white;
+  border-radius: 8px;
+  padding: 16px;
+}
+
+.agm-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.agm-row label {
+  font-weight: 500;
+  color: #555;
+  min-width: 160px;
+}
+
+.agm-input {
+  flex: 1;
+  padding: 10px 14px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-size: 0.95rem;
+}
+
+.agm-input:focus {
+  outline: none;
+  border-color: #2196f3;
+  box-shadow: 0 0 0 3px rgba(33, 150, 243, 0.1);
+}
+
+.agm-medications {
+  margin-bottom: 16px;
+}
+
+.agm-medications label {
+  display: block;
+  font-weight: 500;
+  color: #555;
+  margin-bottom: 10px;
+}
+
+.medication-checkboxes {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+}
+
+.med-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.9rem;
+  color: #333;
+  cursor: pointer;
+}
+
+.med-checkbox input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+  accent-color: #2196f3;
+}
+
+.pre-agm-iop {
+  border-top: 1px solid #e0e0e0;
+  padding-top: 16px;
+}
+
+.pre-agm-iop > label {
+  display: block;
+  font-weight: 500;
+  color: #555;
+  margin-bottom: 10px;
+}
+
+.pre-agm-inputs {
+  display: flex;
+  gap: 20px;
+  margin-bottom: 10px;
+}
+
+.pre-agm-input-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.pre-agm-input-group span {
+  font-weight: 600;
+  color: #333;
+}
+
+.pre-agm-input-group input {
+  width: 80px;
+  padding: 8px 12px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  text-align: center;
+  font-size: 1rem;
+}
+
+.pre-agm-input-group input:focus {
+  outline: none;
+  border-color: #2196f3;
+}
+
+.pre-agm-input-group .unit {
+  color: #666;
+  font-weight: normal;
+  font-size: 0.9rem;
+}
+
+.pre-agm-hint {
+  font-size: 0.85rem;
+  color: #1565c0;
+  background: #e3f2fd;
+  padding: 8px 12px;
+  border-radius: 6px;
+  margin: 0;
+}
+
+/* Current IOP Section (on treatment) */
+.current-iop-section {
+  margin-bottom: 16px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.current-iop-section > label {
+  display: block;
+  font-weight: 600;
+  color: #1565c0;
+  margin-bottom: 10px;
+}
+
+.current-iop-inputs {
+  display: flex;
+  gap: 24px;
+}
+
+.current-iop-inputs .iop-input-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.current-iop-inputs .iop-input-group span {
+  font-weight: 600;
+  color: #333;
+}
+
+.current-iop-inputs .iop-input-group input {
+  width: 80px;
+  padding: 10px 12px;
+  border: 2px solid #2196f3;
+  border-radius: 6px;
+  text-align: center;
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+.current-iop-inputs .iop-input-group input:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(33, 150, 243, 0.2);
+}
+
+.current-iop-inputs .iop-input-group .unit {
+  color: #666;
+  font-weight: normal;
+  font-size: 0.9rem;
+}
+
+/* AGM Formula Box */
+.agm-formula-box {
+  background: #fff8e1;
+  border: 1px solid #ffcc80;
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 16px;
+}
+
+.agm-formula-box .formula-title {
+  font-weight: 600;
+  color: #e65100;
+  margin-bottom: 12px;
+}
+
+.agm-formula-box .formula-content {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.agm-formula-box .formula-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 6px 12px;
+  background: white;
+  border-radius: 4px;
+}
+
+.agm-formula-box .formula-label {
+  color: #666;
+}
+
+.agm-formula-box .formula-value {
+  font-weight: 700;
+  color: #333;
+  font-size: 1.1rem;
+}
+
+.agm-formula-box .formula-value.highlight {
+  color: #e65100;
+  background: #fff3e0;
+  padding: 4px 12px;
+  border-radius: 4px;
+}
+
+.agm-formula-box .formula-rule {
+  text-align: center;
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px dashed #ffcc80;
+}
+
+.agm-formula-box .formula-rule small {
+  color: #666;
+  font-size: 0.85rem;
+}
+
+/* Calculated Baseline Section */
+.calculated-baseline {
+  background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%);
+  border: 2px solid #4caf50;
+  border-radius: 10px;
+  padding: 16px;
+}
+
+.calculated-baseline .baseline-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.calculated-baseline .baseline-icon {
+  font-size: 1.3rem;
+}
+
+.calculated-baseline .baseline-title {
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: #2e7d32;
+}
+
+.calculated-baseline .baseline-values {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-bottom: 12px;
+}
+
+.calculated-baseline .baseline-eye {
+  background: white;
+  padding: 16px;
+  border-radius: 8px;
+  text-align: center;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.calculated-baseline .eye-label {
+  display: block;
+  font-size: 0.85rem;
+  color: #666;
+  text-transform: uppercase;
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+.calculated-baseline .eye-value {
+  display: block;
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: #2e7d32;
+  margin-bottom: 4px;
+}
+
+.calculated-baseline .calculation-detail {
+  display: block;
+  font-size: 0.8rem;
+  color: #888;
+}
+
+.calculated-baseline .baseline-note {
+  margin: 0;
+  font-size: 0.9rem;
+  color: #2e7d32;
+  background: rgba(255,255,255,0.7);
+  padding: 10px 14px;
+  border-radius: 6px;
+  font-weight: 500;
+}
+
+.ocular-card {
+  background: white;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  padding: 20px;
+}
+
+.ocular-card-header {
+  margin-bottom: 8px;
+}
+
+.ocular-badge {
+  display: inline-block;
+  background: #4caf50;
+  color: white;
+  padding: 6px 16px;
+  border-radius: 4px;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.ocular-card-meta {
+  margin-bottom: 20px;
+}
+
+.doctor-info {
+  color: #666;
+  font-size: 0.9rem;
+  font-style: italic;
+}
+
+/* Ocular Table Row Layout */
+.ocular-table-row {
+  display: grid;
+  grid-template-columns: 40px 50px 80px 1fr 1fr;
+  gap: 12px;
+  align-items: start;
+  margin-bottom: 12px;
+}
+
+.ocular-table-row.header {
+  margin-bottom: 16px;
+  align-items: center;
+}
+
+.ocular-table-row.header > div {
+  font-size: 0.85rem;
+  color: #333;
+  font-weight: 500;
+}
+
+/* Column: Add Button */
+.col-action {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding-top: 8px;
+}
+
+.btn-add-row {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: none;
+  background: #4caf50;
+  color: white;
+  font-size: 1.2rem;
+  font-weight: bold;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s;
+}
+
+.btn-add-row:hover {
+  background: #43a047;
+}
+
+/* Column: S/P Badge */
+.col-sp {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding-top: 8px;
+}
+
+.sp-badge {
+  display: inline-block;
+  background: #9c27b0;
+  color: white;
+  padding: 4px 10px;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+/* Column: Year */
+.col-year {
+  display: flex;
+  align-items: flex-start;
+}
+
+.year-input {
+  width: 100%;
+  padding: 8px 10px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 0.9rem;
+  background: #fafafa;
+}
+
+.year-input:focus {
+  outline: none;
+  border-color: #4caf50;
+  background: white;
+}
+
+/* Column: RE Description */
+.col-re-desc {
+  display: flex;
+  flex-direction: column;
+}
+
+/* Column: LE Description */
+.col-le-desc {
+  display: flex;
+  flex-direction: column;
+}
+
+/* Description Textarea */
+.desc-textarea {
+  width: 100%;
+  min-height: 60px;
+  padding: 10px 12px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 0.9rem;
+  font-family: inherit;
+  resize: vertical;
+  background: #fafafa;
+}
+
+.desc-textarea:focus {
+  outline: none;
+  border-color: #4caf50;
+  background: white;
+}
+
+.desc-textarea::placeholder {
+  color: #999;
+}
+
+/* Ocular Action Buttons */
+.ocular-actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 24px;
+  padding-top: 16px;
+  border-top: 1px solid #eee;
+}
+
+.btn-save-ocular {
+  background: #4caf50;
+  color: white;
+  border: none;
+  padding: 10px 28px;
+  border-radius: 4px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.btn-save-ocular:hover {
+  background: #43a047;
+}
+
+.btn-cancel-ocular {
+  background: white;
+  color: #666;
+  border: 1px solid #ddd;
+  padding: 10px 28px;
+  border-radius: 4px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-cancel-ocular:hover {
+  background: #f5f5f5;
+  border-color: #ccc;
+}
+
+.loading {
+  padding: 40px;
+  text-align: center;
+  color: #64748b;
+}
+
+/* Risk Factors Section for Target IOP */
+.risk-factors-section {
+    background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%);
+    border: 2px solid #4caf50;
+    border-radius: 10px;
+    padding: 16px 20px;
+    margin: 20px 0;
+}
+
+.risk-factors-title {
+    margin: 0 0 8px 0;
+    color: #2e7d32;
+    font-size: 1rem;
+    font-weight: 600;
+}
+
+.risk-info-small {
+    font-size: 0.85rem;
+    color: #558b2f;
+    margin-bottom: 12px;
+    font-style: italic;
+}
+
+.risk-toggles {
+    background: white;
+    border-radius: 8px;
+    padding: 12px;
+}
+
+.risk-toggles .toggle-row {
+    border-bottom: 1px solid #e8f5e9;
+    padding: 10px 0;
+}
+
+.risk-toggles .toggle-row:last-child {
+    border-bottom: none;
+}
+
+.risk-toggles .toggle-btn.active.yes {
+    background: #4caf50;
+    border-color: #4caf50;
+}

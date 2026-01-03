@@ -44,6 +44,8 @@ class Patient(Base):
     iop_measurements = relationship("IOPMeasurement", back_populates="patient", cascade="all, delete-orphan")
     target_pressures = relationship("TargetPressure", back_populates="patient", cascade="all, delete-orphan")
     visits = relationship("Visit", back_populates="patient", cascade="all, delete-orphan")
+    emr_records = relationship("EMRRecord", back_populates="patient", cascade="all, delete-orphan")
+    glaucoma_risk_data = relationship("GlaucomaRiskData", back_populates="patient", cascade="all, delete-orphan", uselist=False)
     
     def __repr__(self):
         return f"<Patient(id={self.id}, patient_id={self.patient_id}, name={self.name})>"

@@ -92,6 +92,48 @@ def get_patient_measurements(
     
     return measurements
 
+@router.get("/{patient_id}/baseline", response_model=dict)
+def get_baseline_iop(patient_id: int, db: Session = Depends(get_db)):
+    """
+    Get baseline (untreated) IOP for a patient.
+    Used for Target IOP calculation.
+    """
+    patient = db.query(Patient).filter(Patient.id == patient_id).first()
+    if not patient:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Patient with ID {patient_id} not found"
+        )
+    
+    # Check if patient has stored baseline IOP
+    if patient.baseline_iop_od and patient.baseline_iop_os:
+        return {
+            "baseline_iop_od": patient.baseline_iop_od,
+            "baseline_iop_os": patient.baseline_iop_os,
+            "source": "patient_record"
+        }
+    
+    # Otherwise get first measurement (untreated baseline)
+    first_measurement = db.query(IOPMeasurement).filter(
+        IOPMeasurement.patient_id == patient_id
+    ).order_by(IOPMeasurement.measurement_date.asc()).first()
+    
+    if first_measurement:
+        return {
+            "baseline_iop_od": first_measurement.iop_od or 21,
+            "baseline_iop_os": first_measurement.iop_os or 21,
+            "source": "first_measurement",
+            "measurement_date": first_measurement.measurement_date.isoformat() if first_measurement.measurement_date else None
+        }
+    
+    # Return defaults if no data
+    return {
+        "baseline_iop_od": 21,
+        "baseline_iop_os": 21,
+        "source": "default"
+    }
+
+
 @router.get("/{patient_id}/latest", response_model=dict)
 def get_latest_measurement(patient_id: int, db: Session = Depends(get_db)):
     """

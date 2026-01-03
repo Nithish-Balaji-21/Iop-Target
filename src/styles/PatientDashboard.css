@@ -1225,3 +1225,29 @@
     flex-direction: column;
   }
 }
+
+/* ============================================
+   EMR TAB STYLES
+   ============================================ */
+.emr-tab {
+  animation: fadeIn 0.3s ease;
+}
+
+.emr-help-note {
+  margin-top: 1.5rem;
+  padding: 1rem 1.5rem;
+  background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+  border-left: 4px solid #0ea5e9;
+  border-radius: 0 12px 12px 0;
+  color: #0c4a6e;
+}
+
+.emr-help-note p {
+  margin: 0;
+  font-size: 0.95rem;
+  line-height: 1.5;
+}
+
+.emr-help-note strong {
+  color: #0369a1;
+}

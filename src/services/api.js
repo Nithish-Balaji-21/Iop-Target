@@ -103,7 +103,9 @@ export const targetService = {
 
   getCurrentTarget: async (patientId) => {
     const response = await fetch(`${API_BASE_URL}/targets/${patientId}/current`);
-    if (!response.ok) throw new Error('Failed to fetch current target');
+    if (!response.ok && response.status !== 404) {
+      throw new Error('Failed to fetch current target');
+    }
     return response.json();
   },
 
@@ -167,4 +169,73 @@ export const healthCheck = async () => {
   } catch (error) {
     return false;
   }
+};
+
+// ==================== EMR RECORDS ====================
+
+export const emrService = {
+  /**
+   * Get all EMR records for a patient
+   */
+  getAllRecords: async (patientId) => {
+    const response = await fetch(`${API_BASE_URL}/emr/${patientId}/all`);
+    if (!response.ok) throw new Error('Failed to fetch EMR records');
+    return response.json();
+  },
+
+  /**
+   * Get EMR record for a specific section
+   * @param {string} section - history, fundusexam, investigation, visualfield, diagnosis
+   */
+  getRecord: async (patientId, section) => {
+    const response = await fetch(`${API_BASE_URL}/emr/${patientId}/${section}`);
+    if (!response.ok) throw new Error(`Failed to fetch ${section} record`);
+    return response.json();
+  },
+
+  /**
+   * Save EMR record for a section
+   */
+  saveRecord: async (patientId, section, data, createdBy = 'Dr. User') => {
+    const response = await fetch(`${API_BASE_URL}/emr/${patientId}/${section}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ data, created_by: createdBy }),
+    });
+    if (!response.ok) throw new Error(`Failed to save ${section} record`);
+    return response.json();
+  },
+
+  /**
+   * Delete EMR record for a section
+   */
+  deleteRecord: async (patientId, section) => {
+    const response = await fetch(`${API_BASE_URL}/emr/${patientId}/${section}`, {
+      method: 'DELETE',
+    });
+    if (!response.ok) throw new Error(`Failed to delete ${section} record`);
+    return response.json();
+  },
+
+  /**
+   * Get extracted risk factors for Target IOP calculation
+   */
+  getRiskFactors: async (patientId) => {
+    const response = await fetch(`${API_BASE_URL}/emr/${patientId}/risk-factors`);
+    if (!response.ok) throw new Error('Failed to fetch risk factors');
+    return response.json();
+  },
+
+  /**
+   * Save/update risk factors manually
+   */
+  saveRiskFactors: async (patientId, riskData) => {
+    const response = await fetch(`${API_BASE_URL}/emr/${patientId}/risk-factors`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(riskData),
+    });
+    if (!response.ok) throw new Error('Failed to save risk factors');
+    return response.json();
+  },
 };

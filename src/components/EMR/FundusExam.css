@@ -1,0 +1,213 @@
+/* EMR Fundus Exam Component Styles */
+
+.emr-fundus-container {
+  background: white;
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.emr-section-header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 2px solid #e8f4f8;
+}
+
+.emr-section-header h3 {
+  margin: 0;
+  color: #2c3e50;
+  font-size: 1.25rem;
+}
+
+.exam-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 20px;
+}
+
+.exam-table th,
+.exam-table td {
+  padding: 12px;
+  text-align: left;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.exam-table th {
+  background: #f8fafc;
+  font-weight: 600;
+  color: #475569;
+  font-size: 0.85rem;
+}
+
+.label-col {
+  width: 25%;
+}
+
+.eye-col {
+  width: 25%;
+}
+
+.risk-col {
+  width: 25%;
+  font-size: 0.75rem;
+  color: #64748b;
+}
+
+.label-cell {
+  font-weight: 500;
+  color: #2c3e50;
+  vertical-align: top;
+}
+
+.label-cell .risk-badge {
+  display: block;
+  font-size: 0.7rem;
+  background: #dbeafe;
+  color: #1e40af;
+  padding: 2px 8px;
+  border-radius: 4px;
+  width: fit-content;
+  margin-top: 4px;
+}
+
+.highlight-row {
+  background: #f0f9ff !important;
+}
+
+.highlight-row td {
+  background: inherit;
+}
+
+.exam-table input,
+.exam-table select {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  font-size: 0.9rem;
+}
+
+.exam-table input:focus,
+.exam-table select:focus {
+  outline: none;
+  border-color: #3498db;
+  box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
+}
+
+.risk-info-cell {
+  font-size: 0.75rem;
+  color: #64748b;
+  font-style: italic;
+}
+
+.display-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.display-table th,
+.display-table td {
+  padding: 10px 12px;
+  text-align: left;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.display-table th {
+  background: #f1f5f9;
+  font-weight: 600;
+  color: #475569;
+}
+
+.display-table tr:hover {
+  background: #f8fafc;
+}
+
+/* Reuse common styles */
+.emr-meta,
+.btn-edit,
+.emr-section-content,
+.risk-info,
+.info-icon,
+.action-row,
+.btn-save,
+.btn-cancel,
+.saved-data-display,
+.no-data,
+.loading {
+  /* Inherited from History.css */
+}
+
+.emr-meta {
+  color: #7f8c8d;
+  font-size: 0.85rem;
+  margin-left: auto;
+}
+
+.btn-edit {
+  background: #3498db;
+  color: white;
+  border: none;
+  padding: 6px 16px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.85rem;
+}
+
+.emr-section-content {
+  padding: 8px 0;
+}
+
+.risk-info {
+  background: #e8f6ff;
+  border-left: 4px solid #3498db;
+  padding: 12px 16px;
+  margin-bottom: 20px;
+  border-radius: 0 8px 8px 0;
+  font-size: 0.9rem;
+  color: #2c3e50;
+}
+
+.action-row {
+  margin-top: 20px;
+  display: flex;
+  gap: 12px;
+}
+
+.btn-save {
+  background: #10b981;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 500;
+}
+
+.btn-save:hover {
+  background: #059669;
+}
+
+.btn-cancel {
+  background: #94a3b8;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.no-data {
+  color: #94a3b8;
+  font-style: italic;
+  text-align: center;
+  padding: 24px;
+}
+
+.loading {
+  text-align: center;
+  padding: 40px;
+  color: #64748b;
+}

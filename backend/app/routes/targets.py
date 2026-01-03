@@ -55,10 +55,11 @@ def set_target_pressure(patient_id: int, target: TargetPressureCreate, db: Sessi
     db.refresh(db_target)
     return db_target
 
-@router.get("/{patient_id}/current", response_model=TargetPressureResponse)
-def get_current_target(patient_id: int, db: Session = Depends(get_db)):
+@router.get("/{patient_id}", response_model=TargetPressureResponse)
+def get_target_simple(patient_id: int, db: Session = Depends(get_db)):
     """
     Get the current active target pressure for a patient.
+    Simple endpoint that redirects to /current behavior.
     """
     patient = db.query(Patient).filter(Patient.id == patient_id).first()
     if not patient:
@@ -79,6 +80,62 @@ def get_current_target(patient_id: int, db: Session = Depends(get_db)):
         )
     
     return target
+
+
+@router.get("/{patient_id}/current")
+def get_current_target(patient_id: int, db: Session = Depends(get_db)):
+    """
+    Get the current active target pressure for a patient.
+    Returns empty response with exists=False if no target is set.
+    """
+    patient = db.query(Patient).filter(Patient.id == patient_id).first()
+    if not patient:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Patient with ID {patient_id} not found"
+        )
+    
+    target = db.query(TargetPressure).filter(
+        TargetPressure.patient_id == patient_id,
+        TargetPressure.is_current == "YES"
+    ).first()
+    
+    if not target:
+        # Return graceful "no target" response instead of 404
+        return {
+            "exists": False,
+            "message": "No active target set for this patient"
+        }
+    
+    # Return target with exists flag
+    return {
+        "exists": True,
+        "id": target.id,
+        "patient_id": target.patient_id,
+        "target_iop_od": target.target_iop_od,
+        "target_iop_os": target.target_iop_os,
+        "calculated_target_od": target.calculated_target_od,
+        "calculated_target_os": target.calculated_target_os,
+        "is_overridden_od": target.is_overridden_od,
+        "is_overridden_os": target.is_overridden_os,
+        "override_reason": target.override_reason,
+        "trbs_score_od": target.trbs_score_od,
+        "trbs_score_os": target.trbs_score_os,
+        "risk_tier_od": target.risk_tier_od,
+        "risk_tier_os": target.risk_tier_os,
+        "glaucoma_stage_od": target.glaucoma_stage_od,
+        "glaucoma_stage_os": target.glaucoma_stage_os,
+        "upper_cap_od": target.upper_cap_od,
+        "upper_cap_os": target.upper_cap_os,
+        "baseline_iop_od": target.baseline_iop_od,
+        "baseline_iop_os": target.baseline_iop_os,
+        "reduction_percentage_od": target.reduction_percentage_od,
+        "reduction_percentage_os": target.reduction_percentage_os,
+        "rationale": target.rationale,
+        "set_by": target.set_by,
+        "valid_from": target.valid_from.isoformat() if target.valid_from else None,
+        "is_current": target.is_current
+    }
 
 @router.get("/{patient_id}/history", response_model=List[TargetPressureResponse])
 def get_target_history(patient_id: int, db: Session = Depends(get_db)):

@@ -1,0 +1,173 @@
+/* EMR Panel Container Styles */
+
+.emr-panel {
+  background: #f8fafc;
+  border-radius: 16px;
+  padding: 24px;
+}
+
+.emr-panel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.emr-panel-header h2 {
+  margin: 0;
+  color: #1e293b;
+  font-size: 1.5rem;
+}
+
+.emr-actions {
+  display: flex;
+  gap: 12px;
+}
+
+.btn-refresh-risk {
+  background: #8b5cf6;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.btn-refresh-risk:hover {
+  background: #7c3aed;
+}
+
+.btn-refresh-risk:disabled {
+  background: #c4b5fd;
+  cursor: not-allowed;
+}
+
+/* Risk Factors Summary */
+.risk-factors-summary {
+  background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+  border: 1px solid #7dd3fc;
+  border-radius: 12px;
+  padding: 16px 20px;
+  margin-bottom: 20px;
+}
+
+.risk-factors-summary h4 {
+  margin: 0 0 12px 0;
+  color: #0369a1;
+  font-size: 1rem;
+}
+
+.risk-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 12px;
+}
+
+.risk-item {
+  display: flex;
+  justify-content: space-between;
+  background: white;
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-size: 0.85rem;
+}
+
+.risk-label {
+  color: #64748b;
+  font-weight: 500;
+}
+
+.risk-value {
+  color: #0f172a;
+  font-weight: 600;
+  text-transform: capitalize;
+}
+
+.auto-extracted-note {
+  margin: 12px 0 0 0;
+  font-size: 0.8rem;
+  color: #059669;
+  font-style: italic;
+}
+
+/* EMR Tabs */
+.emr-tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 20px;
+  border-bottom: 2px solid #e2e8f0;
+  padding-bottom: 12px;
+  overflow-x: auto;
+}
+
+.emr-tab {
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 12px 20px;
+  cursor: pointer;
+  font-weight: 500;
+  color: #64748b;
+  transition: all 0.2s ease;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  white-space: nowrap;
+}
+
+.emr-tab:hover {
+  background: #f1f5f9;
+  color: #334155;
+}
+
+.emr-tab.active {
+  background: #3498db;
+  color: white;
+  border-color: #3498db;
+}
+
+.emr-tab.active .domain-badge {
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+}
+
+.domain-badge {
+  font-size: 0.65rem;
+  background: #e2e8f0;
+  color: #64748b;
+  padding: 2px 8px;
+  border-radius: 4px;
+}
+
+/* Section Container */
+.emr-section-container {
+  min-height: 400px;
+}
+
+@media (max-width: 768px) {
+  .emr-tabs {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    padding-bottom: 16px;
+  }
+  
+  .emr-tab {
+    padding: 10px 16px;
+    font-size: 0.9rem;
+  }
+  
+  .emr-panel-header {
+    flex-direction: column;
+    gap: 12px;
+    align-items: flex-start;
+  }
+  
+  .risk-grid {
+    grid-template-columns: 1fr;
+  }
+}

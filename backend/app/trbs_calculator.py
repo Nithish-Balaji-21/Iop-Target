@@ -3,15 +3,16 @@ Target IOP Calculation based on Total Risk Burden Score (TRBS)
 
 This module calculates individual target IOP based on comprehensive risk assessment
 across 7 domains - CALCULATED SEPARATELY FOR EACH EYE:
-- A. Demographic Risk (0-4)
+- A. Demographic Risk (1-4)
 - B. Baseline IOP (0-4)
-- C. Structural Changes (0-8) - per eye
-- D. Functional/Visual Field Changes (0-5) - per eye
-- E. Ocular Risk Modifiers (0-5) - per eye
-- F. Systemic Risk Modifiers (0-5)
-- G. Disease/Patient Factors (0-2)
+- C. Structural Changes (0-9) - per eye (CDR + Notching + RNFL + Disc Hemorrhage)
+- D. Functional/Visual Field Changes (0-6) - per eye
+- E. Disease/Patient Factors (0-3) - shared
+- F. Ocular Risk Modifiers (0-8) - per eye
+- G. Systemic Risk Modifiers (0-5) - shared
 
-Total TRBS Range: 0-29
+Total TRBS Range: 0-39
+Total risk burden score = Sum of risk factors (Range: 0-26) + sum of all risk modifiers
 """
 
 from typing import Dict, Tuple
@@ -85,13 +86,14 @@ class TRBSCalculator:
         "present": 1
     }
     
-    # Domain B: Baseline IOP (0-4)
+    # Domain B: Baseline IOP (0-4) - Untreated IOP
+    # <22mmHg = 0, 22-24 = 1, 24-26 = 2, 26-28 = 3, 28-30+ = 4
     BASELINE_IOP_SCORES = {
-        "less_than_21": 0,
-        "21_to_25": 1,
-        "26_to_29": 2,
-        "30_to_34": 3,
-        "35_or_more": 4
+        "less_than_22": 0,
+        "22_to_24": 1,
+        "24_to_26": 2,
+        "26_to_28": 3,
+        "28_to_30_or_more": 4
     }
     
     # AGM adjustment for baseline IOP
@@ -102,7 +104,8 @@ class TRBSCalculator:
         "3_or_more": 10
     }
     
-    # Domain C: Structural Changes (0-8)
+    # Domain C: Structural Changes (0-9)
+    # Vertical CDR (0-4) + Focal Notching (0-3) + RNFL Defect (0-1) + Disc Hemorrhage (0-1)
     CDR_SCORES = {
         "0.5_or_less": 0,
         "0.6": 1,
@@ -117,19 +120,25 @@ class TRBSCalculator:
         "bipolar": 3
     }
     
+    RNFL_DEFECT_SCORES = {
+        "absent": 0,
+        "present": 1
+    }
+    
     DISC_HEMORRHAGE_SCORES = {
         "absent": 0,
         "present": 1
     }
     
-    # Domain D: Functional/Visual Field Changes (0-5)
+    # Domain D: Functional/Visual Field Changes (0-6)
+    # HFA not done in first visit = 0, >-6 dB = 1, -6 to -12 = 2, -12 to -20 = 3, <-20 dB = 4, HFA not possible = 4
     MEAN_DEVIATION_SCORES = {
-        "0_to_minus_6": 0,
+        "hfa_not_done": 0,
         "greater_than_minus_6": 1,
         "minus_6_to_minus_12": 2,
-        "less_than_minus_12": 3,
-        "hfa_not_possible": 3,
-        "hfa_unreliable": 2
+        "minus_12_to_minus_20": 3,
+        "less_than_minus_20": 4,
+        "hfa_not_possible": 4
     }
     
     CENTRAL_FIELD_SCORES = {
@@ -137,16 +146,27 @@ class TRBSCalculator:
         "yes": 2
     }
     
-    # Domain E: Ocular Risk Modifiers (0-5)
+    # Domain F: Ocular Risk Modifiers (0-8)
+    # Thin CCT (<500 µm) = 1, Low myopia (-1DS to -3DS) without cataract = 1,
+    # Mod to high myopia (<-3DS) without cataract = 2, Angle recession >180 deg = 1,
+    # Pseudoexfoliation = 1, Pigment dispersion = 1, Steroid responder = 1
     CCT_SCORES = {
-        "normal": 0,      # ≥520 µm
-        "thin": 1         # <520 µm
+        "normal": 0,      # ≥500 µm
+        "thin": 1         # <500 µm
+    }
+    
+    MYOPIA_SCORES = {
+        "none": 0,
+        "low_myopia": 1,      # -1DS to -3DS without cataract
+        "mod_high_myopia": 2  # <-3DS without cataract
     }
     
     # Boolean modifiers (each adds 1 if present)
     OCULAR_MODIFIERS = ["angle_recession", "pseudoexfoliation", "pigment_dispersion", "steroid_responder"]
     
-    # Domain F: Systemic Risk Modifiers (0-5)
+    # Domain G: Systemic Risk Modifiers (0-5)
+    # Low ocular perfusion pressure (DOPP <50mm Hg) = 1, Migraine/vasospasm = 1,
+    # Raynaud's = 1, Sleep apnea = 1, Diabetes mellitus = 1
     SYSTEMIC_FACTORS = [
         "low_ocular_perfusion",
         "migraine_vasospasm",
@@ -155,16 +175,35 @@ class TRBSCalculator:
         "diabetes_mellitus"
     ]
     
-    # Domain G: Disease/Patient Factors (0-2)
+    # Domain E: Disease/Patient Factors (0-3)
+    # None = 0, One-eyed patient/Advanced disease in fellow eye = 2, Poor compliance/follow-up = 1
+    PATIENT_FACTOR_SCORES = {
+        "one_eyed_or_advanced_fellow": 2,
+        "poor_compliance": 1
+    }
+    
     PATIENT_FACTORS = [
         "one_eyed_or_advanced_fellow",
         "poor_compliance"
     ]
     
+    # Upper cap based on vertical CDR when baseline IOP > 30mmHg
+    CDR_UPPER_CAP = {
+        "0.5_or_less": 18,
+        "0.6": 18,      # 16-18 mmHg
+        "0.7": 16,      # 14-16 mmHg
+        "0.8": 14,      # 12-14 mmHg
+        "0.9_or_more": 12  # ≤12 mmHg
+    }
+    
     # Risk tier definitions (reduction percentages based on TRBS score)
+    # TRBS 1-6: Low → 20-25% (EMGT/OHTS)
+    # TRBS 7-12: Moderate → 30-35% (CNGTS)
+    # TRBS 13-18: High → 40-45% (AGIS)
+    # TRBS ≥19: Very High → ≥50% (aim ≤12 mmHg)
     RISK_TIERS = {
         RiskTier.LOW: {
-            "min_score": 0,
+            "min_score": 1,
             "max_score": 6,
             "reduction_min": 20,
             "reduction_max": 25
@@ -183,7 +222,7 @@ class TRBSCalculator:
         },
         RiskTier.VERY_HIGH: {
             "min_score": 19,
-            "max_score": 29,
+            "max_score": 39,
             "reduction_min": 50,
             "reduction_max": 50
         }
@@ -225,55 +264,104 @@ class TRBSCalculator:
         
         If patient is on AGM treatment, add adjustment to current IOP
         to estimate untreated baseline.
+        
+        Untreated IOP ranges:
+        - <22mmHg = 0
+        - 22 to <24 = 1
+        - 24 to <26 = 2
+        - 26 to <28 = 3
+        - 28 to ≤30mmHg = 4
         """
         # Add AGM adjustment to get untreated baseline estimate
         agm_adj = TRBSCalculator.AGM_ADJUSTMENT.get(num_agm, 0)
         untreated_iop = baseline_iop + agm_adj
         
         # Determine score based on untreated IOP
-        if untreated_iop < 21:
+        if untreated_iop < 22:
             return 0
-        elif untreated_iop <= 25:
+        elif untreated_iop < 24:
             return 1
-        elif untreated_iop <= 29:
+        elif untreated_iop < 26:
             return 2
-        elif untreated_iop <= 34:
+        elif untreated_iop < 28:
             return 3
         else:
             return 4
     
     @staticmethod
-    def calculate_domain_c(cdr: str, notching: str, disc_hemorrhage: str) -> int:
-        """Calculate Domain C: Structural Changes (0-8)"""
+    def calculate_domain_c(cdr: str, notching: str, rnfl_defect: str, disc_hemorrhage: str) -> int:
+        """Calculate Domain C: Structural Changes (0-9)
+        
+        - Vertical CDR: 0-4 pts
+        - Focal Notching: 0-3 pts
+        - RNFL Defect: 0-1 pt
+        - Disc Hemorrhage: 0-1 pt
+        """
         score = 0
         score += TRBSCalculator.CDR_SCORES.get(cdr, 0)
         score += TRBSCalculator.NOTCHING_SCORES.get(notching, 0)
+        score += TRBSCalculator.RNFL_DEFECT_SCORES.get(rnfl_defect, 0)
         score += TRBSCalculator.DISC_HEMORRHAGE_SCORES.get(disc_hemorrhage, 0)
-        return min(score, 8)  # Cap at max domain score
+        return min(score, 9)  # Cap at max domain score
     
     @staticmethod
     def calculate_domain_d(mean_deviation: str, central_field: str) -> int:
-        """Calculate Domain D: Functional/Visual Field Changes (0-5)"""
+        """Calculate Domain D: Functional/Visual Field Changes (0-6)
+        
+        - Mean Deviation: 0-4 pts
+        - Central Field Involvement (5 degrees): 0-2 pts
+        """
         score = 0
         score += TRBSCalculator.MEAN_DEVIATION_SCORES.get(mean_deviation, 0)
         score += TRBSCalculator.CENTRAL_FIELD_SCORES.get(central_field, 0)
-        return min(score, 5)  # Cap at max domain score
+        return min(score, 6)  # Cap at max domain score
     
     @staticmethod
-    def calculate_domain_e(cct: str, ocular_modifiers: list) -> int:
-        """Calculate Domain E: Ocular Risk Modifiers (0-5)"""
+    def calculate_domain_e(patient_factors: list) -> int:
+        """Calculate Domain E: Disease/Patient Factors (0-3)
+        
+        - None = 0
+        - One-eyed patient / Advanced disease in fellow eye = 2
+        - Poor compliance / follow-up = 1
+        """
+        score = 0
+        for factor in patient_factors:
+            if factor in TRBSCalculator.PATIENT_FACTOR_SCORES:
+                score += TRBSCalculator.PATIENT_FACTOR_SCORES[factor]
+        return min(score, 3)  # Cap at max domain score
+    
+    @staticmethod
+    def calculate_domain_f_ocular(cct: str, myopia: str, ocular_modifiers: list) -> int:
+        """Calculate Domain F: Ocular Risk Modifiers (0-8)
+        
+        - Thin CCT (<500 µm) = 1
+        - Low myopia (-1DS to -3DS) without cataract = 1
+        - Mod to high myopia (<-3DS) without cataract = 2
+        - Angle recession >180 deg = 1
+        - Pseudoexfoliation = 1
+        - Pigment dispersion = 1
+        - Steroid responder = 1
+        """
         score = TRBSCalculator.CCT_SCORES.get(cct, 0)
+        score += TRBSCalculator.MYOPIA_SCORES.get(myopia, 0)
         
         # Add 1 for each present modifier
         for modifier in ocular_modifiers:
             if modifier in TRBSCalculator.OCULAR_MODIFIERS:
                 score += 1
         
-        return min(score, 5)  # Cap at max domain score
+        return min(score, 8)  # Cap at max domain score
     
     @staticmethod
-    def calculate_domain_f(systemic_factors: list) -> int:
-        """Calculate Domain F: Systemic Risk Modifiers (0-5)"""
+    def calculate_domain_g_systemic(systemic_factors: list) -> int:
+        """Calculate Domain G: Systemic Risk Modifiers (0-5)
+        
+        - Low ocular perfusion pressure (DOPP <50mm Hg) = 1
+        - Migraine / vasospasm = 1
+        - Raynaud's = 1
+        - Sleep apnea = 1
+        - Diabetes mellitus = 1
+        """
         score = 0
         for factor in systemic_factors:
             if factor in TRBSCalculator.SYSTEMIC_FACTORS:
@@ -281,13 +369,19 @@ class TRBSCalculator:
         return min(score, 5)  # Cap at max domain score
     
     @staticmethod
-    def calculate_domain_g(patient_factors: list) -> int:
-        """Calculate Domain G: Disease/Patient Factors (0-2)"""
-        score = 0
-        for factor in patient_factors:
-            if factor in TRBSCalculator.PATIENT_FACTORS:
-                score += 1
-        return min(score, 2)  # Cap at max domain score
+    def get_upper_cap_for_cdr(cdr: str, baseline_iop: float) -> float:
+        """Get upper cap target IOP based on CDR when baseline > 30mmHg.
+        
+        If baseline IOP > 30mm Hg, use absolute upper cap based on CDR:
+        - ≤0.5: ≤18mm Hg
+        - 0.6: 16-18mm Hg
+        - 0.7: 14-16mm Hg
+        - 0.8: 12-14mm Hg
+        - ≥0.9: ≤12 mm Hg
+        """
+        if baseline_iop <= 30:
+            return None  # No cap applies
+        return TRBSCalculator.CDR_UPPER_CAP.get(cdr, 18)
     
     @classmethod
     def calculate_single_eye(
@@ -302,22 +396,33 @@ class TRBSCalculator:
         # Domain C (per eye - Structural)
         cdr: str = "0.5_or_less",
         notching: str = "absent",
+        rnfl_defect: str = "absent",
         disc_hemorrhage: str = "absent",
         # Domain D (per eye - Visual Field)
-        mean_deviation: str = "0_to_minus_6",
+        mean_deviation: str = "hfa_not_done",
         central_field: str = "no",
-        # Domain E (per eye - Ocular Modifiers)
-        cct: str = "normal",
-        ocular_modifiers: list = None,
-        # Domain F (shared - Systemic)
-        systemic_factors: list = None,
-        # Domain G (shared - Patient Factors)
+        # Domain E (shared - Patient Factors)
         patient_factors: list = None,
+        # Domain F (per eye - Ocular Modifiers)
+        cct: str = "normal",
+        myopia: str = "none",
+        ocular_modifiers: list = None,
+        # Domain G (shared - Systemic)
+        systemic_factors: list = None,
         # Use aggressive reduction?
         use_aggressive_reduction: bool = False
     ) -> SingleEyeResult:
         """
         Calculate Target IOP for a single eye based on TRBS.
+        
+        Domains:
+        - A. Demographic Risk (1-4) - shared
+        - B. Baseline IOP (0-4) - shared
+        - C. Structural Changes (0-9) - per eye
+        - D. Functional/Visual Field Changes (0-6) - per eye
+        - E. Disease/Patient Factors (0-3) - shared
+        - F. Ocular Risk Modifiers (0-8) - per eye
+        - G. Systemic Risk Modifiers (0-5) - shared
         """
         ocular_modifiers = ocular_modifiers or []
         systemic_factors = systemic_factors or []
@@ -326,25 +431,25 @@ class TRBSCalculator:
         # Calculate domain scores
         domain_a = cls.calculate_domain_a(age, family_history)
         domain_b = cls.calculate_domain_b(baseline_iop, num_agm)
-        domain_c = cls.calculate_domain_c(cdr, notching, disc_hemorrhage)
+        domain_c = cls.calculate_domain_c(cdr, notching, rnfl_defect, disc_hemorrhage)
         domain_d = cls.calculate_domain_d(mean_deviation, central_field)
-        domain_e = cls.calculate_domain_e(cct, ocular_modifiers)
-        domain_f = cls.calculate_domain_f(systemic_factors)
-        domain_g = cls.calculate_domain_g(patient_factors)
+        domain_e = cls.calculate_domain_e(patient_factors)
+        domain_f = cls.calculate_domain_f_ocular(cct, myopia, ocular_modifiers)
+        domain_g = cls.calculate_domain_g_systemic(systemic_factors)
         
         domain_scores = {
             "demographic_risk": domain_a,
             "baseline_iop": domain_b,
             "structural_changes": domain_c,
             "functional_changes": domain_d,
-            "ocular_modifiers": domain_e,
-            "systemic_factors": domain_f,
-            "patient_factors": domain_g
+            "patient_factors": domain_e,
+            "ocular_modifiers": domain_f,
+            "systemic_factors": domain_g
         }
         
         # Calculate total TRBS
         trbs_score = domain_a + domain_b + domain_c + domain_d + domain_e + domain_f + domain_g
-        trbs_score = max(0, min(trbs_score, 29))  # Clamp to 0-29
+        trbs_score = max(1, min(trbs_score, 39))  # Clamp to 1-39
         
         # Get risk tier and reduction parameters
         risk_tier, tier_config = cls.get_risk_tier(trbs_score)
@@ -355,8 +460,17 @@ class TRBSCalculator:
         else:
             reduction_pct = tier_config["reduction_min"]
         
-        # Calculate target IOP (no upper cap)
+        # Calculate target IOP
         calculated_target = cls.calculate_target_iop(baseline_iop, reduction_pct)
+        
+        # Apply upper cap if baseline > 30mmHg (based on CDR)
+        upper_cap = cls.get_upper_cap_for_cdr(cdr, baseline_iop)
+        if upper_cap is not None and calculated_target > upper_cap:
+            calculated_target = upper_cap
+        
+        # For Very High risk, ensure target is ≤12 mmHg
+        if risk_tier == RiskTier.VERY_HIGH and calculated_target > 12:
+            calculated_target = 12.0
         
         return SingleEyeResult(
             eye=eye,
@@ -384,36 +498,42 @@ class TRBSCalculator:
         # Domain C - Right Eye (OD) - Structural
         cdr_od: str = "0.5_or_less",
         notching_od: str = "absent",
+        rnfl_defect_od: str = "absent",
         disc_hemorrhage_od: str = "absent",
         # Domain C - Left Eye (OS) - Structural
         cdr_os: str = "0.5_or_less",
         notching_os: str = "absent",
+        rnfl_defect_os: str = "absent",
         disc_hemorrhage_os: str = "absent",
         # Domain D - Right Eye (OD) - Visual Field
-        mean_deviation_od: str = "0_to_minus_6",
+        mean_deviation_od: str = "hfa_not_done",
         central_field_od: str = "no",
         # Domain D - Left Eye (OS) - Visual Field
-        mean_deviation_os: str = "0_to_minus_6",
+        mean_deviation_os: str = "hfa_not_done",
         central_field_os: str = "no",
-        # Domain E - Right Eye (OD) - Ocular Modifiers
-        cct_od: str = "normal",
-        ocular_modifiers_od: list = None,
-        # Domain E - Left Eye (OS) - Ocular Modifiers
-        cct_os: str = "normal",
-        ocular_modifiers_os: list = None,
-        # Domain F (shared) - Systemic
-        systemic_factors: list = None,
-        # Domain G (shared) - Patient Factors
+        # Domain E (shared) - Patient Factors
         patient_factors: list = None,
+        # Domain F - Right Eye (OD) - Ocular Modifiers
+        cct_od: str = "normal",
+        myopia_od: str = "none",
+        ocular_modifiers_od: list = None,
+        # Domain F - Left Eye (OS) - Ocular Modifiers
+        cct_os: str = "normal",
+        myopia_os: str = "none",
+        ocular_modifiers_os: list = None,
+        # Domain G (shared) - Systemic
+        systemic_factors: list = None,
         # Use aggressive reduction?
         use_aggressive_reduction: bool = False,
         # Legacy support: single values (will apply to both eyes)
         cdr: str = None,
         notching: str = None,
+        rnfl_defect: str = None,
         disc_hemorrhage: str = None,
         mean_deviation: str = None,
         central_field: str = None,
         cct: str = None,
+        myopia: str = None,
         ocular_modifiers: list = None
     ) -> TargetIOPResult:
         """
@@ -433,6 +553,8 @@ class TRBSCalculator:
             cdr_od = cdr_os = cdr
         if notching is not None:
             notching_od = notching_os = notching
+        if rnfl_defect is not None:
+            rnfl_defect_od = rnfl_defect_os = rnfl_defect
         if disc_hemorrhage is not None:
             disc_hemorrhage_od = disc_hemorrhage_os = disc_hemorrhage
         if mean_deviation is not None:
@@ -441,6 +563,8 @@ class TRBSCalculator:
             central_field_od = central_field_os = central_field
         if cct is not None:
             cct_od = cct_os = cct
+        if myopia is not None:
+            myopia_od = myopia_os = myopia
         if ocular_modifiers is not None:
             ocular_modifiers_od = ocular_modifiers_os = ocular_modifiers
         
@@ -459,13 +583,15 @@ class TRBSCalculator:
             num_agm=num_agm,
             cdr=cdr_od,
             notching=notching_od,
+            rnfl_defect=rnfl_defect_od,
             disc_hemorrhage=disc_hemorrhage_od,
             mean_deviation=mean_deviation_od,
             central_field=central_field_od,
+            patient_factors=patient_factors,
             cct=cct_od,
+            myopia=myopia_od,
             ocular_modifiers=ocular_modifiers_od,
             systemic_factors=systemic_factors,
-            patient_factors=patient_factors,
             use_aggressive_reduction=use_aggressive_reduction
         )
         
@@ -478,13 +604,15 @@ class TRBSCalculator:
             num_agm=num_agm,
             cdr=cdr_os,
             notching=notching_os,
+            rnfl_defect=rnfl_defect_os,
             disc_hemorrhage=disc_hemorrhage_os,
             mean_deviation=mean_deviation_os,
             central_field=central_field_os,
+            patient_factors=patient_factors,
             cct=cct_os,
+            myopia=myopia_os,
             ocular_modifiers=ocular_modifiers_os,
             systemic_factors=systemic_factors,
-            patient_factors=patient_factors,
             use_aggressive_reduction=use_aggressive_reduction
         )
         
@@ -536,23 +664,28 @@ def calculate_target_iop(
         # Domain C - Structural per eye
         cdr_od=risk_factors.get("cdr_od", risk_factors.get("cdr", "0.5_or_less")),
         notching_od=risk_factors.get("notching_od", risk_factors.get("notching", "absent")),
+        rnfl_defect_od=risk_factors.get("rnfl_defect_od", risk_factors.get("rnfl_defect", "absent")),
         disc_hemorrhage_od=risk_factors.get("disc_hemorrhage_od", risk_factors.get("disc_hemorrhage", "absent")),
         cdr_os=risk_factors.get("cdr_os", risk_factors.get("cdr", "0.5_or_less")),
         notching_os=risk_factors.get("notching_os", risk_factors.get("notching", "absent")),
+        rnfl_defect_os=risk_factors.get("rnfl_defect_os", risk_factors.get("rnfl_defect", "absent")),
         disc_hemorrhage_os=risk_factors.get("disc_hemorrhage_os", risk_factors.get("disc_hemorrhage", "absent")),
         # Domain D - Visual Field per eye
-        mean_deviation_od=risk_factors.get("mean_deviation_od", risk_factors.get("mean_deviation", "0_to_minus_6")),
+        mean_deviation_od=risk_factors.get("mean_deviation_od", risk_factors.get("mean_deviation", "hfa_not_done")),
         central_field_od=risk_factors.get("central_field_od", risk_factors.get("central_field", "no")),
-        mean_deviation_os=risk_factors.get("mean_deviation_os", risk_factors.get("mean_deviation", "0_to_minus_6")),
+        mean_deviation_os=risk_factors.get("mean_deviation_os", risk_factors.get("mean_deviation", "hfa_not_done")),
         central_field_os=risk_factors.get("central_field_os", risk_factors.get("central_field", "no")),
-        # Domain E - Ocular Modifiers per eye
+        # Domain E - Patient Factors (shared)
+        patient_factors=risk_factors.get("patient_factors", []),
+        # Domain F - Ocular Modifiers per eye
         cct_od=risk_factors.get("cct_od", risk_factors.get("cct", "normal")),
+        myopia_od=risk_factors.get("myopia_od", risk_factors.get("myopia", "none")),
         ocular_modifiers_od=risk_factors.get("ocular_modifiers_od", risk_factors.get("ocular_modifiers", [])),
         cct_os=risk_factors.get("cct_os", risk_factors.get("cct", "normal")),
+        myopia_os=risk_factors.get("myopia_os", risk_factors.get("myopia", "none")),
         ocular_modifiers_os=risk_factors.get("ocular_modifiers_os", risk_factors.get("ocular_modifiers", [])),
-        # Domain F & G (shared)
+        # Domain G - Systemic (shared)
         systemic_factors=risk_factors.get("systemic_factors", []),
-        patient_factors=risk_factors.get("patient_factors", []),
         use_aggressive_reduction=risk_factors.get("use_aggressive_reduction", False)
     )
     

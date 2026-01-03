@@ -1,0 +1,244 @@
+/* EMR Investigation Component Styles - Exact Match to Reference */
+
+.investigation-container {
+    padding: 20px;
+}
+
+/* Investigation Card */
+.investigation-card {
+    background: white;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 24px;
+}
+
+.card-header {
+    margin-bottom: 16px;
+}
+
+.investigations-badge {
+    display: inline-block;
+    background: #1a7a7c;
+    color: white;
+    padding: 8px 20px;
+    border-radius: 4px;
+    font-size: 0.9rem;
+    font-weight: 600;
+}
+
+/* Table Wrapper */
+.inv-table-wrapper {
+    width: 100%;
+}
+
+/* Investigation Table */
+.inv-table {
+    width: 100%;
+    border-collapse: collapse;
+    table-layout: fixed;
+}
+
+.inv-table thead tr {
+    background: #1a7a7c;
+}
+
+.inv-table th {
+    padding: 14px 16px;
+    text-align: left;
+    color: white;
+    font-weight: 600;
+    font-size: 0.9rem;
+}
+
+.inv-table th.col-investigation {
+    width: 25%;
+}
+
+.inv-table th.col-re,
+.inv-table th.col-le {
+    width: 22%;
+}
+
+.inv-table th.col-datetime {
+    width: 31%;
+}
+
+.inv-table tbody tr {
+    border-bottom: 1px solid #eee;
+}
+
+.inv-table tbody tr:last-child {
+    border-bottom: none;
+}
+
+.inv-table td {
+    padding: 12px 16px;
+    vertical-align: middle;
+}
+
+.inv-name {
+    font-weight: 600;
+    color: #333;
+    font-size: 0.95rem;
+}
+
+/* Input Fields */
+.inv-input {
+    width: 100%;
+    padding: 10px 14px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 0.9rem;
+    background: #fafafa;
+    transition: border-color 0.2s, background 0.2s;
+}
+
+.inv-input:focus {
+    outline: none;
+    border-color: #1a7a7c;
+    background: white;
+}
+
+.inv-input::placeholder {
+    color: #999;
+}
+
+.inv-input.wide {
+    max-width: 100%;
+}
+
+.inv-input.datetime {
+    font-size: 0.85rem;
+    color: #666;
+}
+
+/* Dilation Section */
+.dilation-section {
+    margin-bottom: 24px;
+}
+
+.dilation-title {
+    color: #c2185b;
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin: 0 0 12px 0;
+}
+
+.dilation-card {
+    background: white;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    padding: 20px;
+}
+
+.dilation-fields {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 20px;
+}
+
+.dilation-field {
+    display: flex;
+    flex-direction: column;
+}
+
+.dilation-field label {
+    font-size: 0.85rem;
+    color: #666;
+    margin-bottom: 8px;
+    font-weight: 500;
+}
+
+.dilation-field select,
+.dilation-field input {
+    padding: 12px 14px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 0.9rem;
+    background: #fafafa;
+    transition: border-color 0.2s;
+}
+
+.dilation-field select:focus,
+.dilation-field input:focus {
+    outline: none;
+    border-color: #1a7a7c;
+    background: white;
+}
+
+.dilation-field select {
+    cursor: pointer;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%23666' viewBox='0 0 16 16'%3E%3Cpath d='M8 11L3 6h10l-5 5z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    padding-right: 36px;
+}
+
+/* Time Input with Icon */
+.time-input-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.time-input-wrapper input {
+    width: 100%;
+    padding: 12px 14px;
+    padding-right: 40px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 0.9rem;
+    background: #fafafa;
+}
+
+.time-input-wrapper input:focus {
+    outline: none;
+    border-color: #1a7a7c;
+    background: white;
+}
+
+.time-icon {
+    position: absolute;
+    right: 12px;
+    font-size: 1rem;
+    color: #666;
+    pointer-events: none;
+}
+
+/* Save Button */
+.investigation-actions {
+    margin-top: 8px;
+}
+
+.btn-save-investigation {
+    background: #4caf50;
+    color: white;
+    border: none;
+    padding: 12px 28px;
+    border-radius: 4px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.btn-save-investigation:hover {
+    background: #43a047;
+}
+
+/* Loading State */
+.loading {
+    padding: 40px;
+    text-align: center;
+    color: #666;
+}
+
+/* Responsive */
+@media (max-width: 900px) {
+    .dilation-fields {
+        grid-template-columns: 1fr;
+        gap: 16px;
+    }
+}

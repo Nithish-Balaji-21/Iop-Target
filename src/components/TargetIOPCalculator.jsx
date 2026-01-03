@@ -6,13 +6,16 @@ import '../styles/TargetIOP.css';
  * Calculates individual target IOP for EACH EYE based on Total Risk Burden Score
  * 
  * 7 Domains:
- * A. Demographic Risk (0-4) - Shared
+ * A. Demographic Risk (1-4) - Shared
  * B. Baseline IOP (0-4) - Shared
- * C. Structural Changes (0-8) - Per Eye
- * D. Functional/Visual Field Changes (0-5) - Per Eye
- * E. Ocular Risk Modifiers (0-5) - Per Eye
- * F. Systemic Risk Modifiers (0-5) - Shared
- * G. Disease/Patient Factors (0-2) - Shared
+ * C. Structural Changes (0-9) - Per Eye (CDR + Notching + RNFL + Disc Hemorrhage)
+ * D. Functional/Visual Field Changes (0-6) - Per Eye
+ * E. Disease/Patient Factors (0-3) - Shared
+ * F. Ocular Risk Modifiers (0-8) - Per Eye (CCT + Myopia + others)
+ * G. Systemic Risk Modifiers (0-5) - Shared
+ * 
+ * Total Risk Burden Score = Sum of risk factors + sum of all risk modifiers
+ * Risk Tiers: 1-6 Low (20-25%), 7-12 Moderate (30-35%), 13-18 High (40-45%), ≥19 Very High (≥50%)
  */
 export const TargetIOPCalculator = ({ patientId, onTargetCalculated }) => {
   // Baseline IOP (first untreated IOP)
@@ -23,6 +26,11 @@ export const TargetIOPCalculator = ({ patientId, onTargetCalculated }) => {
   
   // Patient data
   const [patientAge, setPatientAge] = useState(null);
+  
+  // EMR auto-populate state
+  const [emrLoading, setEmrLoading] = useState(false);
+  const [emrPopulated, setEmrPopulated] = useState(false);
+  const [emrRiskFactors, setEmrRiskFactors] = useState(null);
   
   // ========== DOMAIN A: Demographics (Shared) ==========
   const [age, setAge] = useState('50_to_70');
@@ -36,6 +44,72 @@ export const TargetIOPCalculator = ({ patientId, onTargetCalculated }) => {
     if (actualAge < 50) return 'under_50';
     if (actualAge <= 70) return '50_to_70';
     return 'over_70';
+  };
+
+  // Fetch EMR risk factors and auto-populate fields
+  const fetchAndPopulateFromEMR = async () => {
+    if (!patientId) return;
+    
+    setEmrLoading(true);
+    try {
+      const response = await fetch(`http://localhost:8000/api/emr/${patientId}/risk-factors`);
+      if (response.ok) {
+        const result = await response.json();
+        if (result.exists && result.data) {
+          const data = result.data;
+          setEmrRiskFactors(data);
+          
+          // Auto-populate Domain A: Demographics
+          if (data.age_range) setAge(data.age_range);
+          if (data.family_history) setFamilyHistory(data.family_history);
+          
+          // Auto-populate Domain B: Baseline IOP
+          if (data.baseline_iop_od) setBaselineIOPOD(data.baseline_iop_od);
+          if (data.baseline_iop_os) setBaselineIOPOS(data.baseline_iop_os);
+          if (data.num_agm) setNumAGM(data.num_agm);
+          
+          // Auto-populate Domain C: Structural (per eye)
+          if (data.cdr_od) setCdrOD(data.cdr_od);
+          if (data.cdr_os) setCdrOS(data.cdr_os);
+          if (data.notching_od) setNotchingOD(data.notching_od);
+          if (data.notching_os) setNotchingOS(data.notching_os);
+          if (data.rnfl_defect_od) setRnflDefectOD(data.rnfl_defect_od);
+          if (data.rnfl_defect_os) setRnflDefectOS(data.rnfl_defect_os);
+          if (data.disc_hemorrhage_od) setDiscHemorrhageOD(data.disc_hemorrhage_od);
+          if (data.disc_hemorrhage_os) setDiscHemorrhageOS(data.disc_hemorrhage_os);
+          
+          // Auto-populate Domain D: Functional (per eye)
+          if (data.mean_deviation_od) setMeanDeviationOD(data.mean_deviation_od);
+          if (data.mean_deviation_os) setMeanDeviationOS(data.mean_deviation_os);
+          if (data.central_field_od) setCentralFieldOD(data.central_field_od);
+          if (data.central_field_os) setCentralFieldOS(data.central_field_os);
+          
+          // Auto-populate Domain E: Patient Factors
+          if (data.patient_factors) setPatientFactors(data.patient_factors);
+          
+          // Auto-populate Domain F: Ocular (per eye)
+          if (data.cct_od) setCctOD(data.cct_od);
+          if (data.cct_os) setCctOS(data.cct_os);
+          if (data.myopia_od) setMyopiaOD(data.myopia_od);
+          if (data.myopia_os) setMyopiaOS(data.myopia_os);
+          if (data.ocular_modifiers_od) setOcularModifiersOD(data.ocular_modifiers_od);
+          if (data.ocular_modifiers_os) setOcularModifiersOS(data.ocular_modifiers_os);
+          
+          // Auto-populate Domain G: Systemic
+          if (data.systemic_factors) setSystemicFactors(data.systemic_factors);
+          
+          setEmrPopulated(true);
+          alert('✓ Successfully populated risk factors from EMR data!');
+        } else {
+          alert('No EMR risk factors found. Please enter data in the EMR sections first.');
+        }
+      }
+    } catch (err) {
+      console.error('Error fetching EMR risk factors:', err);
+      alert('❌ Error fetching EMR data: ' + err.message);
+    } finally {
+      setEmrLoading(false);
+    }
   };
 
   // Fetch patient data to auto-set age range
@@ -96,34 +170,38 @@ export const TargetIOPCalculator = ({ patientId, onTargetCalculated }) => {
   // ========== DOMAIN C: Structural - RIGHT EYE (OD) ==========
   const [cdrOD, setCdrOD] = useState('0.5_or_less');
   const [notchingOD, setNotchingOD] = useState('absent');
+  const [rnflDefectOD, setRnflDefectOD] = useState('absent');
   const [discHemorrhageOD, setDiscHemorrhageOD] = useState('absent');
   
   // ========== DOMAIN C: Structural - LEFT EYE (OS) ==========
   const [cdrOS, setCdrOS] = useState('0.5_or_less');
   const [notchingOS, setNotchingOS] = useState('absent');
+  const [rnflDefectOS, setRnflDefectOS] = useState('absent');
   const [discHemorrhageOS, setDiscHemorrhageOS] = useState('absent');
   
   // ========== DOMAIN D: Functional - RIGHT EYE (OD) ==========
-  const [meanDeviationOD, setMeanDeviationOD] = useState('0_to_minus_6');
+  const [meanDeviationOD, setMeanDeviationOD] = useState('hfa_not_done');
   const [centralFieldOD, setCentralFieldOD] = useState('no');
   
   // ========== DOMAIN D: Functional - LEFT EYE (OS) ==========
-  const [meanDeviationOS, setMeanDeviationOS] = useState('0_to_minus_6');
+  const [meanDeviationOS, setMeanDeviationOS] = useState('hfa_not_done');
   const [centralFieldOS, setCentralFieldOS] = useState('no');
   
-  // ========== DOMAIN E: Ocular - RIGHT EYE (OD) ==========
+  // ========== DOMAIN E: Patient Factors (Shared) ==========
+  const [patientFactors, setPatientFactors] = useState([]);
+  
+  // ========== DOMAIN F: Ocular - RIGHT EYE (OD) ==========
   const [cctOD, setCctOD] = useState('normal');
+  const [myopiaOD, setMyopiaOD] = useState('none');
   const [ocularModifiersOD, setOcularModifiersOD] = useState([]);
   
-  // ========== DOMAIN E: Ocular - LEFT EYE (OS) ==========
+  // ========== DOMAIN F: Ocular - LEFT EYE (OS) ==========
   const [cctOS, setCctOS] = useState('normal');
+  const [myopiaOS, setMyopiaOS] = useState('none');
   const [ocularModifiersOS, setOcularModifiersOS] = useState([]);
   
-  // ========== DOMAIN F: Systemic (Shared) ==========
+  // ========== DOMAIN G: Systemic (Shared) ==========
   const [systemicFactors, setSystemicFactors] = useState([]);
-  
-  // ========== DOMAIN G: Patient Factors (Shared) ==========
-  const [patientFactors, setPatientFactors] = useState([]);
   
   // Options
   const [useAggressiveReduction, setUseAggressiveReduction] = useState(false);
@@ -162,23 +240,28 @@ export const TargetIOPCalculator = ({ patientId, onTargetCalculated }) => {
         // Domain C - Structural per eye
         cdr_od: cdrOD,
         notching_od: notchingOD,
+        rnfl_defect_od: rnflDefectOD,
         disc_hemorrhage_od: discHemorrhageOD,
         cdr_os: cdrOS,
         notching_os: notchingOS,
+        rnfl_defect_os: rnflDefectOS,
         disc_hemorrhage_os: discHemorrhageOS,
         // Domain D - Visual Field per eye
         mean_deviation_od: meanDeviationOD,
         central_field_od: centralFieldOD,
         mean_deviation_os: meanDeviationOS,
         central_field_os: centralFieldOS,
-        // Domain E - Ocular Modifiers per eye
+        // Domain E - Patient Factors (shared)
+        patient_factors: patientFactors,
+        // Domain F - Ocular Modifiers per eye
         cct_od: cctOD,
+        myopia_od: myopiaOD,
         ocular_modifiers_od: ocularModifiersOD,
         cct_os: cctOS,
+        myopia_os: myopiaOS,
         ocular_modifiers_os: ocularModifiersOS,
-        // Domain F & G (shared)
+        // Domain G - Systemic (shared)
         systemic_factors: systemicFactors,
-        patient_factors: patientFactors,
         use_aggressive_reduction: useAggressiveReduction
       };
 
@@ -325,10 +408,21 @@ export const TargetIOPCalculator = ({ patientId, onTargetCalculated }) => {
 
   return (
     <div className="card target-iop-calculator per-eye">
-      <h2>🎯 Target IOP Calculator (TRBS) - Per Eye</h2>
+      <div className="calculator-header">
+        <h2>🎯 Target IOP Calculator (TRBS) - Per Eye</h2>
+        <button 
+          className={`emr-populate-btn ${emrPopulated ? 'populated' : ''}`}
+          onClick={fetchAndPopulateFromEMR}
+          disabled={emrLoading || !patientId}
+          title="Auto-populate risk factors from EMR data"
+        >
+          {emrLoading ? '⏳ Loading...' : emrPopulated ? '✓ EMR Loaded' : '📥 Auto-populate from EMR'}
+        </button>
+      </div>
       <p className="info-text">
         Calculates individualized target IOP for <strong>EACH EYE</strong> based on Total Risk Burden Score 
         and reduction percentages based on risk tier.
+        {emrPopulated && <span className="emr-notice"> ✓ Risk factors loaded from EMR</span>}
       </p>
 
       {error && <div className="error-message">❌ {error}</div>}
@@ -411,105 +505,12 @@ export const TargetIOPCalculator = ({ patientId, onTargetCalculated }) => {
           </div>
         </div>
 
-        {/* ========== DOMAIN B: Baseline IOP (Shared) ========== */}
-        <div className="domain-section">
-          <h3>B. Baseline IOP <span className="score-range">(0-4 pts) - Shared for both eyes</span></h3>
-          <p className="info-text small">
-            If patient is already on AGM treatment, the system will add adjustment to current IOP to estimate untreated baseline.
-          </p>
-          <div className="form-row">
-            <div className="form-group">
-              <label>Number of AGMs (Anti-Glaucoma Medications)</label>
-              <select value={numAGM} onChange={(e) => setNumAGM(e.target.value)}>
-                <option value="0">None (0 mmHg adjustment)</option>
-                <option value="1">1 AGM (+5 mmHg)</option>
-                <option value="2">2 AGMs (+8 mmHg)</option>
-                <option value="3_or_more">≥3 AGMs (+10 mmHg)</option>
-              </select>
-            </div>
-          </div>
-          
-          {/* Untreated IOP Calculation Display */}
-          {baselineIOPOD && baselineIOPOS && (
-            <div className="untreated-iop-calculation">
-              <div className="calculation-header">
-                <strong>📊 Untreated IOP Calculation:</strong>
-              </div>
-              <div className="calculation-grid">
-                {/* Right Eye */}
-                <div className="calc-eye od">
-                  <h5>Right Eye (OD)</h5>
-                  <div className="calc-row">
-                    <span>Current/Measured IOP:</span>
-                    <strong>{baselineIOPOD} mmHg</strong>
-                  </div>
-                  {numAGM !== '0' && (
-                    <div className="calc-row agm-adj">
-                      <span>AGM Adjustment:</span>
-                      <strong>+{numAGM === '1' ? 5 : numAGM === '2' ? 8 : 10} mmHg</strong>
-                    </div>
-                  )}
-                  <div className="calc-row untreated">
-                    <span>Untreated Baseline:</span>
-                    <strong>{baselineIOPOD + (numAGM === '0' ? 0 : numAGM === '1' ? 5 : numAGM === '2' ? 8 : 10)} mmHg</strong>
-                  </div>
-                  <div className="calc-row score">
-                    <span>IOP Score:</span>
-                    <strong className="score-badge">
-                      {(() => {
-                        const untreated = baselineIOPOD + (numAGM === '0' ? 0 : numAGM === '1' ? 5 : numAGM === '2' ? 8 : 10);
-                        if (untreated < 21) return '0 pts';
-                        if (untreated <= 25) return '1 pt';
-                        if (untreated <= 29) return '2 pts';
-                        if (untreated <= 34) return '3 pts';
-                        return '4 pts';
-                      })()}
-                    </strong>
-                  </div>
-                </div>
-                
-                {/* Left Eye */}
-                <div className="calc-eye os">
-                  <h5>Left Eye (OS)</h5>
-                  <div className="calc-row">
-                    <span>Current/Measured IOP:</span>
-                    <strong>{baselineIOPOS} mmHg</strong>
-                  </div>
-                  {numAGM !== '0' && (
-                    <div className="calc-row agm-adj">
-                      <span>AGM Adjustment:</span>
-                      <strong>+{numAGM === '1' ? 5 : numAGM === '2' ? 8 : 10} mmHg</strong>
-                    </div>
-                  )}
-                  <div className="calc-row untreated">
-                    <span>Untreated Baseline:</span>
-                    <strong>{baselineIOPOS + (numAGM === '0' ? 0 : numAGM === '1' ? 5 : numAGM === '2' ? 8 : 10)} mmHg</strong>
-                  </div>
-                  <div className="calc-row score">
-                    <span>IOP Score:</span>
-                    <strong className="score-badge">
-                      {(() => {
-                        const untreated = baselineIOPOS + (numAGM === '0' ? 0 : numAGM === '1' ? 5 : numAGM === '2' ? 8 : 10);
-                        if (untreated < 21) return '0 pts';
-                        if (untreated <= 25) return '1 pt';
-                        if (untreated <= 29) return '2 pts';
-                        if (untreated <= 34) return '3 pts';
-                        return '4 pts';
-                      })()}
-                    </strong>
-                  </div>
-                </div>
-              </div>
-              <div className="score-reference">
-                <small>Score Reference: &lt;21=0 | 21-25=1 | 26-29=2 | 30-34=3 | ≥35=4</small>
-              </div>
-            </div>
-          )}
-        </div>
+        {/* Domain B: Baseline IOP - Auto-populated from Complaints section */}
+        {/* AGM adjustment is already calculated in Complaints when baseline is captured */}
 
         {/* ========== DOMAIN C: Structural (Per Eye) ========== */}
         <div className="domain-section">
-          <h3>C. Structural Changes <span className="score-range">(0-8 pts) - Per Eye</span></h3>
+          <h3>C. Structural Changes <span className="score-range">(0-9 pts) - Per Eye</span></h3>
           <div className="eye-grid">
             {/* RIGHT EYE (OD) */}
             <div className="eye-section">
@@ -530,6 +531,13 @@ export const TargetIOPCalculator = ({ patientId, onTargetCalculated }) => {
                   <option value="absent">Absent (0 pts)</option>
                   <option value="unipolar">Unipolar (2 pts)</option>
                   <option value="bipolar">Bipolar (3 pts)</option>
+                </select>
+              </div>
+              <div className="form-group">
+                <label>RNFL Defect</label>
+                <select value={rnflDefectOD} onChange={(e) => setRnflDefectOD(e.target.value)}>
+                  <option value="absent">Absent (0 pts)</option>
+                  <option value="present">Present (1 pt)</option>
                 </select>
               </div>
               <div className="form-group">
@@ -562,6 +570,13 @@ export const TargetIOPCalculator = ({ patientId, onTargetCalculated }) => {
                 </select>
               </div>
               <div className="form-group">
+                <label>RNFL Defect</label>
+                <select value={rnflDefectOS} onChange={(e) => setRnflDefectOS(e.target.value)}>
+                  <option value="absent">Absent (0 pts)</option>
+                  <option value="present">Present (1 pt)</option>
+                </select>
+              </div>
+              <div className="form-group">
                 <label>Disc Hemorrhage</label>
                 <select value={discHemorrhageOS} onChange={(e) => setDiscHemorrhageOS(e.target.value)}>
                   <option value="absent">Absent (0 pts)</option>
@@ -574,7 +589,7 @@ export const TargetIOPCalculator = ({ patientId, onTargetCalculated }) => {
 
         {/* ========== DOMAIN D: Functional (Per Eye) ========== */}
         <div className="domain-section">
-          <h3>D. Functional / Visual Field <span className="score-range">(0-5 pts) - Per Eye</span></h3>
+          <h3>D. Functional / Visual Field <span className="score-range">(0-6 pts) - Per Eye</span></h3>
           <div className="eye-grid">
             {/* RIGHT EYE (OD) */}
             <div className="eye-section">
@@ -582,16 +597,16 @@ export const TargetIOPCalculator = ({ patientId, onTargetCalculated }) => {
               <div className="form-group">
                 <label>Mean Deviation (MD)</label>
                 <select value={meanDeviationOD} onChange={(e) => setMeanDeviationOD(e.target.value)}>
-                  <option value="0_to_minus_6">0 to -6 dB (0 pts)</option>
+                  <option value="hfa_not_done">HFA not done in first visit (0 pts)</option>
                   <option value="greater_than_minus_6">&gt;-6 dB (1 pt)</option>
                   <option value="minus_6_to_minus_12">-6 to -12 dB (2 pts)</option>
-                  <option value="less_than_minus_12">&lt;-12 dB (3 pts)</option>
-                  <option value="hfa_not_possible">HFA Not Possible (3 pts)</option>
-                  <option value="hfa_unreliable">HFA Unreliable (2 pts)</option>
+                  <option value="minus_12_to_minus_20">-12 to -20 dB (3 pts)</option>
+                  <option value="less_than_minus_20">&lt;-20 dB (4 pts)</option>
+                  <option value="hfa_not_possible">HFA not possible due to advanced disease (4 pts)</option>
                 </select>
               </div>
               <div className="form-group">
-                <label>Central Field Involvement</label>
+                <label>Central Field Involvement (5 degrees)</label>
                 <select value={centralFieldOD} onChange={(e) => setCentralFieldOD(e.target.value)}>
                   <option value="no">No (0 pts)</option>
                   <option value="yes">Yes (2 pts)</option>
@@ -604,16 +619,16 @@ export const TargetIOPCalculator = ({ patientId, onTargetCalculated }) => {
               <div className="form-group">
                 <label>Mean Deviation (MD)</label>
                 <select value={meanDeviationOS} onChange={(e) => setMeanDeviationOS(e.target.value)}>
-                  <option value="0_to_minus_6">0 to -6 dB (0 pts)</option>
+                  <option value="hfa_not_done">HFA not done in first visit (0 pts)</option>
                   <option value="greater_than_minus_6">&gt;-6 dB (1 pt)</option>
                   <option value="minus_6_to_minus_12">-6 to -12 dB (2 pts)</option>
-                  <option value="less_than_minus_12">&lt;-12 dB (3 pts)</option>
-                  <option value="hfa_not_possible">HFA Not Possible (3 pts)</option>
-                  <option value="hfa_unreliable">HFA Unreliable (2 pts)</option>
+                  <option value="minus_12_to_minus_20">-12 to -20 dB (3 pts)</option>
+                  <option value="less_than_minus_20">&lt;-20 dB (4 pts)</option>
+                  <option value="hfa_not_possible">HFA not possible due to advanced disease (4 pts)</option>
                 </select>
               </div>
               <div className="form-group">
-                <label>Central Field Involvement</label>
+                <label>Central Field Involvement (5 degrees)</label>
                 <select value={centralFieldOS} onChange={(e) => setCentralFieldOS(e.target.value)}>
                   <option value="no">No (0 pts)</option>
                   <option value="yes">Yes (2 pts)</option>
@@ -623,9 +638,29 @@ export const TargetIOPCalculator = ({ patientId, onTargetCalculated }) => {
           </div>
         </div>
 
-        {/* ========== DOMAIN E: Ocular (Per Eye) ========== */}
+        {/* ========== DOMAIN E: Disease/Patient Factors (Shared) ========== */}
         <div className="domain-section">
-          <h3>E. Ocular Risk Modifiers <span className="score-range">(0-5 pts) - Per Eye</span></h3>
+          <h3>E. Disease / Patient Factors <span className="score-range">(0-3 pts) - Shared for both eyes</span></h3>
+          <div className="checkbox-group">
+            {[
+              { key: 'one_eyed_or_advanced_fellow', label: 'One-Eyed Patient / Advanced Disease in Fellow Eye (+2)' },
+              { key: 'poor_compliance', label: 'Poor Compliance / Follow-up (+1)' }
+            ].map(item => (
+              <label key={item.key} className="checkbox-item">
+                <input
+                  type="checkbox"
+                  checked={patientFactors.includes(item.key)}
+                  onChange={() => toggleArrayItem(patientFactors, setPatientFactors, item.key)}
+                />
+                <span>{item.label}</span>
+              </label>
+            ))}
+          </div>
+        </div>
+
+        {/* ========== DOMAIN F: Ocular (Per Eye) ========== */}
+        <div className="domain-section">
+          <h3>F. Ocular Risk Modifiers <span className="score-range">(0-8 pts) - Per Eye</span></h3>
           <div className="eye-grid">
             {/* RIGHT EYE (OD) */}
             <div className="eye-section">
@@ -633,8 +668,16 @@ export const TargetIOPCalculator = ({ patientId, onTargetCalculated }) => {
               <div className="form-group">
                 <label>Central Corneal Thickness (CCT)</label>
                 <select value={cctOD} onChange={(e) => setCctOD(e.target.value)}>
-                  <option value="normal">≥520 µm (0 pts)</option>
-                  <option value="thin">&lt;520 µm (+1 pt)</option>
+                  <option value="normal">≥500 µm (0 pts)</option>
+                  <option value="thin">&lt;500 µm (+1 pt)</option>
+                </select>
+              </div>
+              <div className="form-group">
+                <label>Myopia (without cataract)</label>
+                <select value={myopiaOD} onChange={(e) => setMyopiaOD(e.target.value)}>
+                  <option value="none">None / With Cataract (0 pts)</option>
+                  <option value="low_myopia">Low Myopia (-1DS to -3DS) (+1 pt)</option>
+                  <option value="mod_high_myopia">Mod to High Myopia (&lt;-3DS) (+2 pts)</option>
                 </select>
               </div>
               <div className="checkbox-group compact">
@@ -678,8 +721,16 @@ export const TargetIOPCalculator = ({ patientId, onTargetCalculated }) => {
               <div className="form-group">
                 <label>Central Corneal Thickness (CCT)</label>
                 <select value={cctOS} onChange={(e) => setCctOS(e.target.value)}>
-                  <option value="normal">≥520 µm (0 pts)</option>
-                  <option value="thin">&lt;520 µm (+1 pt)</option>
+                  <option value="normal">≥500 µm (0 pts)</option>
+                  <option value="thin">&lt;500 µm (+1 pt)</option>
+                </select>
+              </div>
+              <div className="form-group">
+                <label>Myopia (without cataract)</label>
+                <select value={myopiaOS} onChange={(e) => setMyopiaOS(e.target.value)}>
+                  <option value="none">None / With Cataract (0 pts)</option>
+                  <option value="low_myopia">Low Myopia (-1DS to -3DS) (+1 pt)</option>
+                  <option value="mod_high_myopia">Mod to High Myopia (&lt;-3DS) (+2 pts)</option>
                 </select>
               </div>
               <div className="checkbox-group compact">
@@ -720,12 +771,12 @@ export const TargetIOPCalculator = ({ patientId, onTargetCalculated }) => {
           </div>
         </div>
 
-        {/* ========== DOMAIN F: Systemic (Shared) ========== */}
+        {/* ========== DOMAIN G: Systemic (Shared) ========== */}
         <div className="domain-section">
-          <h3>F. Systemic Risk Modifiers <span className="score-range">(0-5 pts) - Shared for both eyes</span></h3>
+          <h3>G. Systemic Risk Modifiers <span className="score-range">(0-5 pts) - Shared for both eyes</span></h3>
           <div className="checkbox-group">
             {[
-              { key: 'low_ocular_perfusion', label: 'Low Ocular Perfusion Pressure (+1)' },
+              { key: 'low_ocular_perfusion', label: 'Low Ocular Perfusion Pressure (DOPP <50mm Hg) (+1)' },
               { key: 'migraine_vasospasm', label: 'Migraine / Vasospasm (+1)' },
               { key: 'raynauds', label: "Raynaud's Phenomenon (+1)" },
               { key: 'sleep_apnea', label: 'Sleep Apnea (+1)' },
@@ -736,26 +787,6 @@ export const TargetIOPCalculator = ({ patientId, onTargetCalculated }) => {
                   type="checkbox"
                   checked={systemicFactors.includes(item.key)}
                   onChange={() => toggleArrayItem(systemicFactors, setSystemicFactors, item.key)}
-                />
-                <span>{item.label}</span>
-              </label>
-            ))}
-          </div>
-        </div>
-
-        {/* ========== DOMAIN G: Patient Factors (Shared) ========== */}
-        <div className="domain-section">
-          <h3>G. Disease / Patient Factors <span className="score-range">(0-2 pts) - Shared for both eyes</span></h3>
-          <div className="checkbox-group">
-            {[
-              { key: 'one_eyed_or_advanced_fellow', label: 'One-Eyed Patient / Advanced Disease in Fellow Eye (+1)' },
-              { key: 'poor_compliance', label: 'Poor Compliance / Follow-up (+1)' }
-            ].map(item => (
-              <label key={item.key} className="checkbox-item">
-                <input
-                  type="checkbox"
-                  checked={patientFactors.includes(item.key)}
-                  onChange={() => toggleArrayItem(patientFactors, setPatientFactors, item.key)}
                 />
                 <span>{item.label}</span>
               </label>
@@ -967,10 +998,25 @@ export const TargetIOPCalculator = ({ patientId, onTargetCalculated }) => {
                   <tr><th>Score</th><th>Tier</th><th>Reduction</th><th>Reference</th></tr>
                 </thead>
                 <tbody>
-                  <tr><td>0-6</td><td style={{color: '#22c55e'}}>Low</td><td>20-25%</td><td>EMGT/OHTS</td></tr>
+                  <tr><td>1-6</td><td style={{color: '#22c55e'}}>Low</td><td>20-25%</td><td>EMGT/OHTS</td></tr>
                   <tr><td>7-12</td><td style={{color: '#eab308'}}>Moderate</td><td>30-35%</td><td>CNGTS</td></tr>
                   <tr><td>13-18</td><td style={{color: '#f97316'}}>High</td><td>40-45%</td><td>AGIS</td></tr>
-                  <tr><td>19-29</td><td style={{color: '#ef4444'}}>Very High</td><td>≥50%</td><td>Aim ≤12 mmHg</td></tr>
+                  <tr><td>≥19</td><td style={{color: '#ef4444'}}>Very High</td><td>≥50%</td><td>Aim ≤12 mmHg</td></tr>
+                </tbody>
+              </table>
+            </div>
+            <div className="reference-table">
+              <h5>📋 Upper Cap (When Baseline &gt;30mmHg)</h5>
+              <table>
+                <thead>
+                  <tr><th>Vertical CDR</th><th>Max Target IOP</th></tr>
+                </thead>
+                <tbody>
+                  <tr><td>≤0.5</td><td>≤18 mmHg</td></tr>
+                  <tr><td>0.6</td><td>16-18 mmHg</td></tr>
+                  <tr><td>0.7</td><td>14-16 mmHg</td></tr>
+                  <tr><td>0.8</td><td>12-14 mmHg</td></tr>
+                  <tr><td>≥0.9</td><td>≤12 mmHg</td></tr>
                 </tbody>
               </table>
             </div>

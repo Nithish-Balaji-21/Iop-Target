@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { usePatients } from '../hooks';
 import { LoadingSpinner, EmptyState } from './Common';
-import { patientService } from '../services/api';
+import { patientService, riskService } from '../services/api';
 import '../styles/PatientList.css';
 
 // Helper function to get glaucoma type full form
@@ -34,6 +34,7 @@ function PatientList({ onSelectPatient }) {
   });
   const [addError, setAddError] = useState('');
   const [addLoading, setAddLoading] = useState(false);
+  const [validityMap, setValidityMap] = useState({});
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -56,10 +57,28 @@ function PatientList({ onSelectPatient }) {
         return;
       }
 
-      await patientService.createPatient({
+      // Create patient and capture returned record
+      const created = await patientService.createPatient({
         ...newPatient,
         age: newPatient.age || null
       });
+
+      // Create an initial visit so visit_date exists for downstream calculations
+      try {
+        await riskService.createVisit(created.id, {
+          patient_id: created.id,
+          visit_date: new Date().toISOString(),
+          visit_type: 'INITIAL',
+          findings: 'Initial registration',
+          treatment_changes: '',
+          doctor_notes: '',
+          created_by: 'System'
+        });
+      } catch (visitErr) {
+        // Non-fatal: log and continue — patient creation succeeded
+        // eslint-disable-next-line no-console
+        console.warn('Failed to create initial visit:', visitErr.message || visitErr);
+      }
 
       // Reset form and refresh list
       setNewPatient({
@@ -82,6 +101,31 @@ function PatientList({ onSelectPatient }) {
     patient.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     patient.patient_id.toLowerCase().includes(searchTerm.toLowerCase())
   );
+
+  // Fetch validity (90-day) info for displayed patients
+  useEffect(() => {
+    let mounted = true;
+    const fetchValidityForPatients = async () => {
+      if (!filteredPatients || filteredPatients.length === 0) return;
+      const map = {};
+      await Promise.all(
+        filteredPatients.map(async (p) => {
+          try {
+            const res = await fetch(`http://localhost:8000/api/measurements/${p.id}/validity-check`);
+            if (!res.ok) return;
+            const data = await res.json();
+            map[p.id] = data;
+          } catch (err) {
+            // ignore per-patient errors
+          }
+        })
+      );
+      if (mounted) setValidityMap(map);
+    };
+
+    fetchValidityForPatients();
+    return () => { mounted = false; };
+  }, [filteredPatients]);
 
   if (error) {
     return (
@@ -229,6 +273,22 @@ function PatientList({ onSelectPatient }) {
                 <div className="detail-item">
                   <span className="detail-label">Type:</span>
                   <span className="detail-value">{getGlaucomaTypeFullForm(patient.glaucoma_type)}</span>
+                </div>
+                <div className="detail-divider">|</div>
+                <div className="detail-item measurement-reminder">
+                  {validityMap[patient.id] ? (
+                    validityMap[patient.id].has_measurement ? (
+                      validityMap[patient.id].is_valid ? (
+                        <span className="detail-value">Last {validityMap[patient.id].days_since_measurement}d • OK</span>
+                      ) : (
+                        <span className="detail-value overdue">Overdue by {Math.max(0, -validityMap[patient.id].days_until_due)}d</span>
+                      )
+                    ) : (
+                      <span className="detail-value overdue">No measurements</span>
+                    )
+                  ) : (
+                    <span className="detail-value">—</span>
+                  )}
                 </div>
               </div>
               

@@ -20,7 +20,6 @@ export default function TargetIOP({ patientId, onTargetCalculated }) {
   // EMR auto-populate state
   const [emrLoading, setEmrLoading] = useState(false);
   const [emrPopulated, setEmrPopulated] = useState(false);
-  const [emrRiskFactors, setEmrRiskFactors] = useState(null); // Store all EMR risk factors including dopp_info
   
   // Target status
   const [hasTarget, setHasTarget] = useState(false);
@@ -44,27 +43,25 @@ export default function TargetIOP({ patientId, onTargetCalculated }) {
   const [discHemorrhageOS, setDiscHemorrhageOS] = useState('absent');
   
   // ========== DOMAIN D: Functional - Per Eye ==========
-  const [meanDeviationOD, setMeanDeviationOD] = useState('hfa_not_done');
+  const [meanDeviationOD, setMeanDeviationOD] = useState('0_to_minus_6');
   const [centralFieldOD, setCentralFieldOD] = useState('no');
-  const [meanDeviationOS, setMeanDeviationOS] = useState('hfa_not_done');
+  const [meanDeviationOS, setMeanDeviationOS] = useState('0_to_minus_6');
   const [centralFieldOS, setCentralFieldOS] = useState('no');
   
-  // ========== DOMAIN E: Patient Factors (Shared) ==========
-  const [patientFactors, setPatientFactors] = useState([]);
-  
-  // ========== DOMAIN F: Ocular - Per Eye ==========
+  // ========== DOMAIN E: Ocular - Per Eye ==========
   const [cctOD, setCctOD] = useState('normal');
-  const [myopiaOD, setMyopiaOD] = useState('none');
   const [ocularModifiersOD, setOcularModifiersOD] = useState([]);
   const [cctOS, setCctOS] = useState('normal');
-  const [myopiaOS, setMyopiaOS] = useState('none');
   const [ocularModifiersOS, setOcularModifiersOS] = useState([]);
   
-  // ========== DOMAIN G: Systemic (Shared) ==========
+  // ========== DOMAIN F: Systemic (Shared) ==========
   const [systemicFactors, setSystemicFactors] = useState([]);
   
-  // Options - Always use aggressive reduction (upper range) by default
-  const [useAggressiveReduction] = useState(true);
+  // ========== DOMAIN G: Patient Factors (Shared) ==========
+  const [patientFactors, setPatientFactors] = useState([]);
+  
+  // Options
+  const [useAggressiveReduction, setUseAggressiveReduction] = useState(false);
   
   // Results
   const [calculation, setCalculation] = useState(null);
@@ -94,10 +91,6 @@ export default function TargetIOP({ patientId, onTargetCalculated }) {
         const result = await response.json();
         if (result.exists && result.data) {
           const data = result.data;
-          setEmrRiskFactors(data); // Store all data for conditional rendering
-          
-          console.log('📊 Fetched EMR Risk Factors:', data);
-          
           if (data.age_range) setAge(data.age_range);
           if (data.family_history) setFamilyHistory(data.family_history);
           if (data.baseline_iop_od) setBaselineIOPOD(data.baseline_iop_od);
@@ -109,117 +102,18 @@ export default function TargetIOP({ patientId, onTargetCalculated }) {
           if (data.notching_os) setNotchingOS(data.notching_os);
           if (data.disc_hemorrhage_od) setDiscHemorrhageOD(data.disc_hemorrhage_od);
           if (data.disc_hemorrhage_os) setDiscHemorrhageOS(data.disc_hemorrhage_os);
-          // RNFL Defect
-          if (data.rnfl_defect_od) {
-            console.log('✓ Setting RNFL Defect OD:', data.rnfl_defect_od);
-            setRnflDefectOD(data.rnfl_defect_od);
-          }
-          if (data.rnfl_defect_os) {
-            console.log('✓ Setting RNFL Defect OS:', data.rnfl_defect_os);
-            setRnflDefectOS(data.rnfl_defect_os);
-          }
-          // Auto-populate Domain D: Functional (per eye)
-          // Map mean_deviation from stored format to calculator format
-          if (data.mean_deviation_od) {
-            const mdMap = {
-              '0_to_minus_6': 'greater_than_minus_6',
-              'minus_6_to_minus_12': 'minus_6_to_minus_12',
-              'less_than_minus_12': 'less_than_minus_20',
-              'hfa_not_done': 'hfa_not_done'
-            };
-            setMeanDeviationOD(mdMap[data.mean_deviation_od] || data.mean_deviation_od || 'hfa_not_done');
-          } else {
-            setMeanDeviationOD('hfa_not_done');
-          }
-          if (data.mean_deviation_os) {
-            const mdMap = {
-              '0_to_minus_6': 'greater_than_minus_6',
-              'minus_6_to_minus_12': 'minus_6_to_minus_12',
-              'less_than_minus_12': 'less_than_minus_20',
-              'hfa_not_done': 'hfa_not_done'
-            };
-            setMeanDeviationOS(mdMap[data.mean_deviation_os] || data.mean_deviation_os || 'hfa_not_done');
-          } else {
-            setMeanDeviationOS('hfa_not_done');
-          }
+          if (data.mean_deviation_od) setMeanDeviationOD(data.mean_deviation_od);
+          if (data.mean_deviation_os) setMeanDeviationOS(data.mean_deviation_os);
           if (data.central_field_od) setCentralFieldOD(data.central_field_od);
           if (data.central_field_os) setCentralFieldOS(data.central_field_os);
-          // Auto-populate Domain E: Patient Factors
-          if (data.patient_factors) setPatientFactors(data.patient_factors);
-          
-          // Auto-populate Domain F: Ocular (per eye)
-          if (data.cct_od) {
-            console.log('✓ Setting CCT OD:', data.cct_od);
-            setCctOD(data.cct_od);
-          }
-          if (data.cct_os) {
-            console.log('✓ Setting CCT OS:', data.cct_os);
-            setCctOS(data.cct_os);
-          }
-          if (data.myopia_od) {
-            console.log('✓ Setting Myopia OD:', data.myopia_od);
-            setMyopiaOD(data.myopia_od);
-          }
-          if (data.myopia_os) {
-            console.log('✓ Setting Myopia OS:', data.myopia_os);
-            setMyopiaOS(data.myopia_os);
-          }
+          if (data.cct_od) setCctOD(data.cct_od);
+          if (data.cct_os) setCctOS(data.cct_os);
           if (data.ocular_modifiers_od) setOcularModifiersOD(data.ocular_modifiers_od);
           if (data.ocular_modifiers_os) setOcularModifiersOS(data.ocular_modifiers_os);
-          
-          // Auto-populate Domain G: Systemic (includes BP-derived low_ocular_perfusion)
-          let finalSystemicFactors = data.systemic_factors || [];
-          
-          // Check dopp_info and add low_ocular_perfusion if DOPP < 50
-          if (data.dopp_info) {
-            const dopp = data.dopp_info;
-            console.log('📊 BP/DOPP Info received:', dopp);
-            
-            if (dopp.low_perfusion_od || dopp.low_perfusion_os) {
-              console.log(`⚠️ Low DOPP detected: OD=${dopp.dopp_od}mmHg, OS=${dopp.dopp_os}mmHg (BP: ${dopp.bp_value}, Diastolic: ${dopp.diastolic}mmHg)`);
-              
-              // Ensure low_ocular_perfusion is in systemic_factors if DOPP is low
-              if (!finalSystemicFactors.includes('low_ocular_perfusion')) {
-                finalSystemicFactors = [...finalSystemicFactors, 'low_ocular_perfusion'];
-                console.log('✓ Added low_ocular_perfusion to systemic_factors based on DOPP calculation');
-              }
-            } else {
-              console.log(`✓ DOPP normal: OD=${dopp.dopp_od}mmHg, OS=${dopp.dopp_os}mmHg (BP: ${dopp.bp_value}, Diastolic: ${dopp.diastolic}mmHg)`);
-              
-              // Remove low_ocular_perfusion if DOPP is no longer low
-              if (finalSystemicFactors.includes('low_ocular_perfusion')) {
-                finalSystemicFactors = finalSystemicFactors.filter(f => f !== 'low_ocular_perfusion');
-                console.log('✓ Removed low_ocular_perfusion from systemic_factors (DOPP is now normal)');
-              }
-            }
-          } else {
-            console.log('ℹ️ No BP/DOPP info available. Make sure BP is entered in Investigation section and IOP measurements exist.');
-          }
-          
-          // Set the final systemic factors
-          if (finalSystemicFactors.length > 0) {
-            setSystemicFactors(finalSystemicFactors);
-            if (finalSystemicFactors.includes('low_ocular_perfusion')) {
-              console.log('✓ Low Ocular Perfusion Pressure will be checked in calculator');
-            }
-          }
-          
+          if (data.systemic_factors) setSystemicFactors(data.systemic_factors);
+          if (data.patient_factors) setPatientFactors(data.patient_factors);
           setEmrPopulated(true);
-          
-          // Log what was populated for debugging
-          console.log('✅ Auto-populated values:', {
-            rnfl_od: data.rnfl_defect_od || 'not set',
-            rnfl_os: data.rnfl_defect_os || 'not set',
-            cct_od: data.cct_od || 'not set',
-            cct_os: data.cct_os || 'not set',
-            myopia_od: data.myopia_od || 'not set',
-            myopia_os: data.myopia_os || 'not set'
-          });
-        } else {
-          console.warn('⚠️ No EMR risk data found');
         }
-      } else {
-        console.error('⚠️ Error response from API');
       }
     } catch (err) {
       console.error('Error fetching EMR risk factors:', err);
@@ -325,10 +219,9 @@ export default function TargetIOP({ patientId, onTargetCalculated }) {
         cdr_os: cdrOS, notching_os: notchingOS, rnfl_defect_os: rnflDefectOS, disc_hemorrhage_os: discHemorrhageOS,
         mean_deviation_od: meanDeviationOD, central_field_od: centralFieldOD,
         mean_deviation_os: meanDeviationOS, central_field_os: centralFieldOS,
-        patient_factors: patientFactors,
-        cct_od: cctOD, myopia_od: myopiaOD, ocular_modifiers_od: ocularModifiersOD,
-        cct_os: cctOS, myopia_os: myopiaOS, ocular_modifiers_os: ocularModifiersOS,
-        systemic_factors: systemicFactors,
+        cct_od: cctOD, ocular_modifiers_od: ocularModifiersOD,
+        cct_os: cctOS, ocular_modifiers_os: ocularModifiersOS,
+        systemic_factors: systemicFactors, patient_factors: patientFactors,
         use_aggressive_reduction: useAggressiveReduction
       };
 
@@ -396,58 +289,7 @@ export default function TargetIOP({ patientId, onTargetCalculated }) {
       const result = await response.json();
       setHasTarget(true);
       setCurrentTarget({ target_iop_od: doctorTargetOD, target_iop_os: doctorTargetOS });
-      
-      // Get current IOP to show status
-      try {
-        const measurementResponse = await fetch(`http://localhost:8000/api/measurements/${patientId}/latest`);
-        if (measurementResponse.ok) {
-          const measurementData = await measurementResponse.json();
-          if (measurementData.exists && measurementData.measurement) {
-            const currentIOPOD = measurementData.measurement.iop_od;
-            const currentIOPOS = measurementData.measurement.iop_os;
-            const targetOD = parseFloat(doctorTargetOD);
-            const targetOS = parseFloat(doctorTargetOS);
-            
-            let statusMessages = [];
-            
-            if (targetOD && currentIOPOD !== null && currentIOPOD !== undefined) {
-              const diffOD = currentIOPOD - targetOD;
-              if (diffOD > 0) {
-                statusMessages.push(`OD: Above Target (${currentIOPOD.toFixed(1)} > ${targetOD.toFixed(1)} mmHg)`);
-              } else if (diffOD >= -2) {
-                statusMessages.push(`OD: Within Target (${currentIOPOD.toFixed(1)} ≤ ${targetOD.toFixed(1)} mmHg)`);
-              } else {
-                statusMessages.push(`OD: Below Target (${currentIOPOD.toFixed(1)} < ${targetOD.toFixed(1)} mmHg)`);
-              }
-            }
-            
-            if (targetOS && currentIOPOS !== null && currentIOPOS !== undefined) {
-              const diffOS = currentIOPOS - targetOS;
-              if (diffOS > 0) {
-                statusMessages.push(`OS: Above Target (${currentIOPOS.toFixed(1)} > ${targetOS.toFixed(1)} mmHg)`);
-              } else if (diffOS >= -2) {
-                statusMessages.push(`OS: Within Target (${currentIOPOS.toFixed(1)} ≤ ${targetOS.toFixed(1)} mmHg)`);
-              } else {
-                statusMessages.push(`OS: Below Target (${currentIOPOS.toFixed(1)} < ${targetOS.toFixed(1)} mmHg)`);
-              }
-            }
-            
-            if (statusMessages.length > 0) {
-              alert(`✓ Target IOP saved successfully!\n\n${statusMessages.join('\n')}`);
-            } else {
-              alert('✓ Target IOP saved successfully!');
-            }
-          } else {
-            alert('✓ Target IOP saved successfully! (No current measurement to compare)');
-          }
-        } else {
-          alert('✓ Target IOP saved successfully!');
-        }
-      } catch (err) {
-        console.error('Error checking measurement status:', err);
-        alert('✓ Target IOP saved successfully!');
-      }
-      
+      alert('✓ Target IOP saved successfully!');
       if (onTargetCalculated) onTargetCalculated({ target_iop_od: doctorTargetOD, target_iop_os: doctorTargetOS, ...result });
     } catch (err) {
       alert('❌ Error saving target: ' + err.message);
@@ -511,12 +353,11 @@ export default function TargetIOP({ patientId, onTargetCalculated }) {
 
         {error && <div className="error-banner">❌ {error}</div>}
 
-        {/* Domain B: Baseline IOP */}
+        {/* Baseline IOP Section */}
         <div className="domain-card">
           <div className="domain-header">
-            <span className="domain-letter">B.</span>
-            <h3>Baseline IOP</h3>
-            <span className="domain-range">(0-4 pts) - Shared for both eyes</span>
+            <BarChart3 size={18} />
+            <h3>Baseline IOP (First Untreated IOP)</h3>
           </div>
           
           {baselineSource === 'default' && (
@@ -559,7 +400,7 @@ export default function TargetIOP({ patientId, onTargetCalculated }) {
           <div className="domain-header">
             <span className="domain-letter">A.</span>
             <h3>Demographic Risk</h3>
-            <span className="domain-range">(1-4 pts) - Shared for both eyes</span>
+            <span className="domain-range">(0-4 pts) - Shared for both eyes</span>
           </div>
           <div className="domain-row">
             <div className="input-group">
@@ -585,13 +426,15 @@ export default function TargetIOP({ patientId, onTargetCalculated }) {
           </div>
         </div>
 
+        {/* Domain B: Baseline IOP - Auto-populated from Complaints section */}
+        {/* AGM adjustment is already calculated in Complaints when baseline is captured */}
 
         {/* Domain C: Structural */}
         <div className="domain-card">
           <div className="domain-header">
             <span className="domain-letter">C.</span>
             <h3>Structural Changes</h3>
-            <span className="domain-range">(0-9 pts) - Per Eye</span>
+            <span className="domain-range">(0-8 pts) - Per Eye</span>
           </div>
           <div className="eye-grid">
             <div className="eye-column">
@@ -680,16 +523,14 @@ export default function TargetIOP({ patientId, onTargetCalculated }) {
               <div className="input-group">
                 <label>MEAN DEVIATION (MD)</label>
                 <select value={meanDeviationOD} onChange={(e) => setMeanDeviationOD(e.target.value)}>
-                  <option value="hfa_not_done">HFA not done in first visit (0 pts)</option>
-                  <option value="greater_than_minus_6">≥-6 dB (1 pt)</option>
-                  <option value="minus_6_to_minus_12">-6.01 to -12 dB (2 pts)</option>
-                  <option value="minus_12_to_minus_20">-12.01 to -20 dB (3 pts)</option>
-                  <option value="less_than_minus_20">&lt;-20.01 dB (4 pts)</option>
-                  <option value="hfa_not_possible">HFA not possible due to advanced disease (4 pts)</option>
+                  <option value="0_to_minus_6">0 to -6 dB (0 pts)</option>
+                  <option value="greater_than_minus_6">&gt;-6 dB (1 pt)</option>
+                  <option value="minus_6_to_minus_12">-6 to -12 dB (2 pts)</option>
+                  <option value="less_than_minus_12">&lt;-12 dB (3 pts)</option>
                 </select>
               </div>
               <div className="input-group">
-                <label>CENTRAL FIELD INVOLVEMENT (5 DEGREES)</label>
+                <label>CENTRAL FIELD INVOLVEMENT</label>
                 <select value={centralFieldOD} onChange={(e) => setCentralFieldOD(e.target.value)}>
                   <option value="no">No (0 pts)</option>
                   <option value="yes">Yes (2 pts)</option>
@@ -701,16 +542,14 @@ export default function TargetIOP({ patientId, onTargetCalculated }) {
               <div className="input-group">
                 <label>MEAN DEVIATION (MD)</label>
                 <select value={meanDeviationOS} onChange={(e) => setMeanDeviationOS(e.target.value)}>
-                  <option value="hfa_not_done">HFA not done in first visit (0 pts)</option>
-                  <option value="greater_than_minus_6">≥-6 dB (1 pt)</option>
-                  <option value="minus_6_to_minus_12">-6.01 to -12 dB (2 pts)</option>
-                  <option value="minus_12_to_minus_20">-12.01 to -20 dB (3 pts)</option>
-                  <option value="less_than_minus_20">&lt;-20.01 dB (4 pts)</option>
-                  <option value="hfa_not_possible">HFA not possible due to advanced disease (4 pts)</option>
+                  <option value="0_to_minus_6">0 to -6 dB (0 pts)</option>
+                  <option value="greater_than_minus_6">&gt;-6 dB (1 pt)</option>
+                  <option value="minus_6_to_minus_12">-6 to -12 dB (2 pts)</option>
+                  <option value="less_than_minus_12">&lt;-12 dB (3 pts)</option>
                 </select>
               </div>
               <div className="input-group">
-                <label>CENTRAL FIELD INVOLVEMENT (5 DEGREES)</label>
+                <label>CENTRAL FIELD INVOLVEMENT</label>
                 <select value={centralFieldOS} onChange={(e) => setCentralFieldOS(e.target.value)}>
                   <option value="no">No (0 pts)</option>
                   <option value="yes">Yes (2 pts)</option>
@@ -720,36 +559,12 @@ export default function TargetIOP({ patientId, onTargetCalculated }) {
           </div>
         </div>
 
-        {/* Domain E: Disease/Patient Factors */}
+        {/* Domain E: Ocular */}
         <div className="domain-card">
           <div className="domain-header">
             <span className="domain-letter">E.</span>
-            <h3>Disease / Patient Factors</h3>
-            <span className="domain-range">(0-3 pts) - Shared for both eyes</span>
-          </div>
-          <div className="checkbox-grid">
-            {[
-              { key: 'one_eyed_or_advanced_fellow', label: 'One-Eyed Patient / Advanced Disease in Fellow Eye (+2)' },
-              { key: 'poor_compliance', label: 'Poor Compliance / Follow-up (+1)' }
-            ].map(item => (
-              <label key={item.key} className="checkbox-item">
-                <input
-                  type="checkbox"
-                  checked={patientFactors.includes(item.key)}
-                  onChange={() => toggleArrayItem(patientFactors, setPatientFactors, item.key)}
-                />
-                <span>{item.label}</span>
-              </label>
-            ))}
-          </div>
-        </div>
-
-        {/* Domain F: Ocular Risk Modifiers */}
-        <div className="domain-card">
-          <div className="domain-header">
-            <span className="domain-letter">F.</span>
             <h3>Ocular Risk Modifiers</h3>
-            <span className="domain-range">(0-8 pts) - Per Eye</span>
+            <span className="domain-range">(0-5 pts) - Per Eye</span>
           </div>
           <div className="eye-grid">
             <div className="eye-column">
@@ -757,16 +572,8 @@ export default function TargetIOP({ patientId, onTargetCalculated }) {
               <div className="input-group">
                 <label>CCT (CENTRAL CORNEAL THICKNESS)</label>
                 <select value={cctOD} onChange={(e) => setCctOD(e.target.value)}>
-                  <option value="normal">≥500 µm (0 pts)</option>
-                  <option value="thin">&lt;500 µm (+1 pt)</option>
-                </select>
-              </div>
-              <div className="input-group">
-                <label>MYOPIA (WITHOUT CATARACT)</label>
-                <select value={myopiaOD} onChange={(e) => setMyopiaOD(e.target.value)}>
-                  <option value="none">None / With Cataract (0 pts)</option>
-                  <option value="low_myopia">Low Myopia (-1DS to -3DS) (+1 pt)</option>
-                  <option value="mod_high_myopia">Mod to High Myopia (&lt;-3DS) (+2 pts)</option>
+                  <option value="normal">≥520 µm (0 pts)</option>
+                  <option value="thin">&lt;520 µm (+1 pt)</option>
                 </select>
               </div>
               <div className="checkbox-list">
@@ -792,16 +599,8 @@ export default function TargetIOP({ patientId, onTargetCalculated }) {
               <div className="input-group">
                 <label>CCT (CENTRAL CORNEAL THICKNESS)</label>
                 <select value={cctOS} onChange={(e) => setCctOS(e.target.value)}>
-                  <option value="normal">≥500 µm (0 pts)</option>
-                  <option value="thin">&lt;500 µm (+1 pt)</option>
-                </select>
-              </div>
-              <div className="input-group">
-                <label>MYOPIA (WITHOUT CATARACT)</label>
-                <select value={myopiaOS} onChange={(e) => setMyopiaOS(e.target.value)}>
-                  <option value="none">None / With Cataract (0 pts)</option>
-                  <option value="low_myopia">Low Myopia (-1DS to -3DS) (+1 pt)</option>
-                  <option value="mod_high_myopia">Mod to High Myopia (&lt;-3DS) (+2 pts)</option>
+                  <option value="normal">≥520 µm (0 pts)</option>
+                  <option value="thin">&lt;520 µm (+1 pt)</option>
                 </select>
               </div>
               <div className="checkbox-list">
@@ -825,42 +624,16 @@ export default function TargetIOP({ patientId, onTargetCalculated }) {
           </div>
         </div>
 
-        {/* Domain G: Systemic Risk Modifiers */}
+        {/* Domain F: Systemic */}
         <div className="domain-card">
           <div className="domain-header">
             <span className="domain-letter">F.</span>
             <h3>Systemic Risk Modifiers</h3>
             <span className="domain-range">(0-5 pts) - Shared for both eyes</span>
           </div>
-          {emrRiskFactors?.dopp_info && (
-            <div className={`dopp-warning-banner ${!(emrRiskFactors.dopp_info.low_perfusion_od || emrRiskFactors.dopp_info.low_perfusion_os) ? 'info' : ''}`}>
-              <span className="warning-icon">
-                {emrRiskFactors.dopp_info.low_perfusion_od || emrRiskFactors.dopp_info.low_perfusion_os ? '⚠️' : 'ℹ️'}
-              </span>
-              <div className="dopp-warning-content">
-                <strong>
-                  {emrRiskFactors.dopp_info.low_perfusion_od || emrRiskFactors.dopp_info.low_perfusion_os
-                    ? 'Low Ocular Perfusion Pressure Detected'
-                    : 'BP/DOPP Calculation from EMR'}
-                </strong>
-                <div className="dopp-details">
-                  BP: {emrRiskFactors.dopp_info.bp_value} (Diastolic: {emrRiskFactors.dopp_info.diastolic} mmHg)
-                  {emrRiskFactors.dopp_info.dopp_od !== null && (
-                    <span> | DOPP OD: {emrRiskFactors.dopp_info.dopp_od} mmHg {emrRiskFactors.dopp_info.low_perfusion_od ? <strong style={{color: '#dc2626'}}>(Low!)</strong> : ''}</span>
-                  )}
-                  {emrRiskFactors.dopp_info.dopp_os !== null && (
-                    <span> | DOPP OS: {emrRiskFactors.dopp_info.dopp_os} mmHg {emrRiskFactors.dopp_info.low_perfusion_os ? <strong style={{color: '#dc2626'}}>(Low!)</strong> : ''}</span>
-                  )}
-                </div>
-                <small>
-                  DOPP = Diastolic BP - IOP. If &lt;50 mmHg, "Low Ocular Perfusion Pressure" is automatically selected below.
-                </small>
-              </div>
-            </div>
-          )}
           <div className="checkbox-grid">
             {[
-              { key: 'low_ocular_perfusion', label: 'Low Ocular Perfusion Pressure (DOPP <50mm Hg) (+1)' },
+              { key: 'low_ocular_perfusion', label: 'Low Ocular Perfusion Pressure (+1)' },
               { key: 'migraine_vasospasm', label: 'Migraine / Vasospasm (+1)' },
               { key: 'raynauds', label: "Raynaud's Phenomenon (+1)" },
               { key: 'sleep_apnea', label: 'Sleep Apnea (+1)' },
@@ -872,19 +645,47 @@ export default function TargetIOP({ patientId, onTargetCalculated }) {
                   checked={systemicFactors.includes(item.key)}
                   onChange={() => toggleArrayItem(systemicFactors, setSystemicFactors, item.key)}
                 />
-                <span>
-                  {item.label}
-                  {item.key === 'low_ocular_perfusion' && emrRiskFactors?.dopp_info && (emrRiskFactors.dopp_info.low_perfusion_od || emrRiskFactors.dopp_info.low_perfusion_os) && (
-                    <span className="auto-detected-badge" style={{ marginLeft: '0.5rem', fontSize: '0.85rem', color: '#059669', fontWeight: 600 }}>(Auto-detected from BP)</span>
-                  )}
-                </span>
+                <span>{item.label}</span>
               </label>
             ))}
           </div>
         </div>
 
+        {/* Domain G: Patient Factors */}
+        <div className="domain-card">
+          <div className="domain-header">
+            <span className="domain-letter">G.</span>
+            <h3>Disease / Patient Factors</h3>
+            <span className="domain-range">(0-2 pts) - Shared for both eyes</span>
+          </div>
+          <div className="checkbox-grid">
+            {[
+              { key: 'one_eyed_or_advanced_fellow', label: 'One-Eyed Patient / Advanced Disease in Fellow Eye (+1)' },
+              { key: 'poor_compliance', label: 'Poor Compliance / Follow-up (+1)' }
+            ].map(item => (
+              <label key={item.key} className="checkbox-item">
+                <input
+                  type="checkbox"
+                  checked={patientFactors.includes(item.key)}
+                  onChange={() => toggleArrayItem(patientFactors, setPatientFactors, item.key)}
+                />
+                <span>{item.label}</span>
+              </label>
+            ))}
+          </div>
+        </div>
 
         {/* Options */}
+        <div className="options-section">
+          <label className="checkbox-item aggressive">
+            <input
+              type="checkbox"
+              checked={useAggressiveReduction}
+              onChange={(e) => setUseAggressiveReduction(e.target.checked)}
+            />
+            <span>⚡ Use Aggressive Reduction (upper range of tier)</span>
+          </label>
+        </div>
 
         {/* Calculate Button */}
         <button onClick={calculateTarget} disabled={loading} className="btn-calculate">

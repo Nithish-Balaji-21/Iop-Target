@@ -24,12 +24,11 @@ export default function FundusExam({ patientId, onDataChange }) {
     // CDR options for dropdown (0.1 to 1.0)
     const cdrOptions = ['0.1', '0.2', '0.3', '0.4', '0.5', '0.6', '0.7', '0.8', '0.9', '1.0'];
     
-    // Notch options - Three options: Absent, Unipolar, Bipolar
+    // Notch options - simplified (Absent/Present)
     const notchOptions = [
         { value: '', label: 'Select Notch' },
         { value: 'Absent', label: 'Absent (0 points)' },
-        { value: 'Unipolar', label: 'Unipolar notching (2 points)' },
-        { value: 'Bipolar', label: 'Bipolar notching (3 points)' }
+        { value: 'Present', label: 'Present (3 points)' }
     ];
 
     const hemorrhageOptions = [
@@ -79,9 +78,7 @@ export default function FundusExam({ patientId, onDataChange }) {
     // Map notch value to TRBS format
     const mapNotchToTRBS = (notchValue) => {
         if (!notchValue || notchValue === 'Absent' || notchValue === 'No Notch') return 'absent';
-        if (notchValue === 'Unipolar' || notchValue.toLowerCase().includes('unipolar')) return 'unipolar';
-        if (notchValue === 'Bipolar' || notchValue.toLowerCase().includes('bipolar')) return 'bipolar';
-        return 'absent'; // Default to absent if unknown
+        return 'bipolar'; // Present = bipolar (3 points)
     };
 
     // Map hemorrhage value to TRBS format
@@ -112,12 +109,10 @@ export default function FundusExam({ patientId, onDataChange }) {
                         cdr_od: mapCdrToTRBS(examData.discCdr.re),
                         notching_od: mapNotchToTRBS(examData.discNotch.re),
                         disc_hemorrhage_od: mapHemorrhageToTRBS(examData.discHemorrhage?.re),
-                        rnfl_defect_od: examData.rnflDefect?.re === 'present' ? 'present' : 'absent',
                         // Domain C: Structural - Left Eye (OS)
                         cdr_os: mapCdrToTRBS(examData.discCdr.le),
                         notching_os: mapNotchToTRBS(examData.discNotch.le),
-                        disc_hemorrhage_os: mapHemorrhageToTRBS(examData.discHemorrhage?.le),
-                        rnfl_defect_os: examData.rnflDefect?.le === 'present' ? 'present' : 'absent'
+                        disc_hemorrhage_os: mapHemorrhageToTRBS(examData.discHemorrhage?.le)
                     })
                 });
 
@@ -223,7 +218,7 @@ export default function FundusExam({ patientId, onDataChange }) {
                                         </select>
                                     </td>
                                     <td className="risk-info-cell">
-                                        Absent: 0pts | Unipolar: 2pts | Bipolar: 3pts
+                                        Absent: 0pts | Present: 3pts
                                     </td>
                                 </tr>
                                 <tr className="highlight-row">
@@ -253,27 +248,9 @@ export default function FundusExam({ patientId, onDataChange }) {
                                 </tr>
                                 <tr>
                                     <td className="label-cell">RNFL Defect</td>
-                                    <td>
-                                        <select 
-                                            value={examData.rnflDefect?.re || 'absent'} 
-                                            onChange={(e) => handleChange('rnflDefect', 're', e.target.value)}
-                                            className="exam-select"
-                                        >
-                                            <option value="absent">Absent</option>
-                                            <option value="present">Present</option>
-                                        </select>
-                                    </td>
-                                    <td>
-                                        <select 
-                                            value={examData.rnflDefect?.le || 'absent'} 
-                                            onChange={(e) => handleChange('rnflDefect', 'le', e.target.value)}
-                                            className="exam-select"
-                                        >
-                                            <option value="absent">Absent</option>
-                                            <option value="present">Present</option>
-                                        </select>
-                                    </td>
-                                    <td className="risk-info-cell">Present: +1 pt</td>
+                                    <td><input type="text" placeholder="Describe defect" value={examData.rnflDefect?.re || ''} onChange={(e) => handleChange('rnflDefect', 're', e.target.value)} /></td>
+                                    <td><input type="text" placeholder="Describe defect" value={examData.rnflDefect?.le || ''} onChange={(e) => handleChange('rnflDefect', 'le', e.target.value)} /></td>
+                                    <td className="risk-info-cell">-</td>
                                 </tr>
                                 <tr>
                                     <td className="label-cell">Vessels</td>
